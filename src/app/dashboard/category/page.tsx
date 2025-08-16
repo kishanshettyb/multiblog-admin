@@ -74,11 +74,12 @@ export default function CategoryTable() {
   })
 
   React.useEffect(() => {
-    if (editingCategory && categoryData?.data) {
+    if (editingCategory) {
+      // Use the editingCategory data directly since it already contains all the fields we need
       form.reset({
-        category_name: categoryData.data.category_name,
-        slug: categoryData.data.slug,
-        category_status: categoryData.data.category_status
+        category_name: editingCategory.category_name,
+        slug: editingCategory.slug,
+        category_status: editingCategory.category_status as 'active' | 'inactive'
       })
     } else {
       form.reset({
@@ -87,7 +88,7 @@ export default function CategoryTable() {
         category_status: 'active'
       })
     }
-  }, [categoryData?.data, editingCategory])
+  }, [editingCategory])
 
   const handleDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this category?')) {

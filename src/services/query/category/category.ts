@@ -17,7 +17,7 @@ export function useGetAllCategory() {
 
 export function useGetAllTag() {
   return useQuery({
-    queryKey: ['tag'],
+    queryKey: ['tags'],
     queryFn: () => getAllTags()
   })
 }
