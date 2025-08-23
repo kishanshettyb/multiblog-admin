@@ -69,9 +69,7 @@ export default function CategoryTable() {
   })
 
   // Use the hook with proper typing and enabled condition
-  const { data: categoryData } = useGetCategoryById(editingCategory?.id?.toString() || '', {
-    enabled: !!editingCategory?.id
-  })
+  const { data: categoryData } = useGetCategoryById(Number(editingCategory?.id))
 
   React.useEffect(() => {
     if (editingCategory) {
