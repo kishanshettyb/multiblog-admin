@@ -27,6 +27,17 @@ import {
   FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog'
 import { useGetAllDomain, useGetDomainById } from '@/services/query/category/category'
 import {
   useCreateDomains,
@@ -38,8 +49,10 @@ export type Domain = {
   id: number
   documentId: string
   domain_name: string
+  domain_url: string
   domain_status: string
-  logo_url: string
+  logo_image_url: string
+  icon_image_url: string
   createdAt: string
   updatedAt: string
   publishedAt: string
@@ -47,50 +60,74 @@ export type Domain = {
 
 const formSchema = z.object({
   domain_name: z.string().min(1, { message: 'Domain name is required' }),
+  domain_url: z.string().min(1, { message: 'Domain URL is required' }),
   domain_status: z.enum(['active', 'inactive']),
-  logo_url: z.string().url({ message: 'Invalid URL format' }).optional()
+  logo_image_url: z.string().url({ message: 'Invalid URL format' }).optional().or(z.literal('')),
+  icon_image_url: z.string().url({ message: 'Invalid URL format' }).optional().or(z.literal(''))
 })
 
 export default function DomainTable() {
-  const { data, isLoading } = useGetAllDomain()
+  const { data } = useGetAllDomain()
   const deleteMutation = useDeleteDomain()
   const createMutation = useCreateDomains()
   const updateMutation = useUpdateDomains()
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [editingDomain, setEditingDomain] = React.useState<Domain | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [domainToDelete, setDomainToDelete] = React.useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       domain_name: '',
+      domain_url: '',
       domain_status: 'active',
-      logo_url: ''
+      logo_image_url: '',
+      icon_image_url: ''
     }
   })
 
-  const { data: domainData } = useGetDomainById(editingDomain?.id?.toString() || '', {
-    enabled: !!editingDomain?.id
-  })
+  const { data: domainData } = useGetDomainById(editingDomain?.documentId)
 
   React.useEffect(() => {
-    if (editingDomain) {
+    if (domainData?.data) {
       form.reset({
-        domain_name: editingDomain.domain_name,
-        domain_status: editingDomain.domain_status as 'active' | 'inactive',
-        logo_url: editingDomain.logo_url || ''
+        domain_name: domainData.data.domain_name,
+        domain_url: domainData.data?.data.domain_url,
+        domain_status: domainData.data?.data.domain_status as 'active' | 'inactive',
+        logo_image_url: domainData.data?.data.logo_image_url || '',
+        icon_image_url: domainData.data?.data.icon_image_url || ''
       })
     } else {
       form.reset({
         domain_name: '',
+        domain_url: '',
         domain_status: 'active',
-        logo_url: ''
+        logo_image_url: '',
+        icon_image_url: ''
       })
     }
-  }, [editingDomain])
+  }, [domainData, form])
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this domain?')) {
-      deleteMutation.mutate(id)
+  const handleDelete = (documentId: string) => {
+    setDomainToDelete(documentId)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (domainToDelete) {
+      deleteMutation.mutate(domainToDelete, {
+        onSuccess: () => {
+          toast.success('Domain deleted successfully')
+          setDeleteDialogOpen(false)
+          setDomainToDelete(null)
+        },
+        onError: () => {
+          toast.error('Failed to delete domain')
+          setDeleteDialogOpen(false)
+          setDomainToDelete(null)
+        }
+      })
     }
   }
 
@@ -103,14 +140,16 @@ export default function DomainTable() {
     const payload = {
       data: {
         domain_name: values.domain_name,
+        domain_url: values.domain_url,
         domain_status: values.domain_status,
-        ...(values.logo_url && { logo_url: values.logo_url })
+        ...(values.logo_image_url && { logo_image_url: values.logo_image_url }),
+        ...(values.icon_image_url && { icon_image_url: values.icon_image_url })
       }
     }
 
     if (editingDomain) {
       updateMutation.mutate(
-        { id: editingDomain.id, payload },
+        { id: editingDomain.documentId, payload },
         {
           onSuccess: () => {
             setIsDialogOpen(false)
@@ -173,7 +212,12 @@ export default function DomainTable() {
     {
       accessorKey: 'domain_name',
       header: 'Domain Name',
-      cell: ({ row }) => <div className="lowercase">{row.getValue('domain_name')}</div>
+      cell: ({ row }) => <div className="capitalize">{row.getValue('domain_name')}</div>
+    },
+    {
+      accessorKey: 'domain_url',
+      header: 'Domain URL',
+      cell: ({ row }) => <div className="lowercase">{row.getValue('domain_url')}</div>
     },
     {
       accessorKey: 'domain_status',
@@ -188,14 +232,26 @@ export default function DomainTable() {
       }
     },
     {
-      accessorKey: 'logo_url',
+      accessorKey: 'logo_image_url',
       header: 'Logo',
       cell: ({ row }) => {
-        const logoUrl = row.getValue('logo_url') as string
+        const logoUrl = row.getValue('logo_image_url') as string
         return logoUrl ? (
           <img src={logoUrl} alt="Domain Logo" className="h-10 w-10 rounded-full object-cover" />
         ) : (
           <div className="text-gray-400">No logo</div>
+        )
+      }
+    },
+    {
+      accessorKey: 'icon_image_url',
+      header: 'Icon',
+      cell: ({ row }) => {
+        const iconUrl = row.getValue('icon_image_url') as string
+        return iconUrl ? (
+          <img src={iconUrl} alt="Domain Icon" className="h-10 w-10 rounded-full object-cover" />
+        ) : (
+          <div className="text-gray-400">No icon</div>
         )
       }
     },
@@ -226,14 +282,37 @@ export default function DomainTable() {
             <Button size="sm" onClick={() => handleEdit(domain)}>
               Edit
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDelete(domain.id)}
-              disabled={deleteMutation.isPending}
+            <AlertDialog
+              open={deleteDialogOpen && domainToDelete === domain.documentId}
+              onOpenChange={setDeleteDialogOpen}
             >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </Button>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(domain.documentId)}
+                >
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the domain
+                    {domain.domain_name} and remove it from our servers.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setDomainToDelete(null)}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
+                    {deleteMutation.isPending ? 'Deleting...' : 'Continue'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )
       }
@@ -241,8 +320,8 @@ export default function DomainTable() {
   ]
 
   return (
-    <div className="w-screen">
-      <div className="overflow-x-auto w-3/4">
+    <>
+      <div className="w-full p-4">
         <div className="flex justify-end mb-4">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -268,7 +347,28 @@ export default function DomainTable() {
                       <FormItem>
                         <FormLabel>Domain Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter domain name" {...field} />
+                          <Input
+                            placeholder="Enter domain name"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="domain_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Domain URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter domain URL"
+                            {...field}
+                            value={field.value || ''}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -295,12 +395,33 @@ export default function DomainTable() {
                   />
                   <FormField
                     control={form.control}
-                    name="logo_url"
+                    name="logo_image_url"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Logo URL (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter logo URL" {...field} />
+                          <Input
+                            placeholder="Enter logo URL"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="icon_image_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Icon URL (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter icon URL"
+                            {...field}
+                            value={field.value || ''}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -333,8 +454,11 @@ export default function DomainTable() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+
+      <div className="px-4">
         <DataTable columns={columns} data={data?.data?.data || []} />
       </div>
-    </div>
+    </>
   )
 }

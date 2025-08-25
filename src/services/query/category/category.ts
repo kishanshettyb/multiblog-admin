@@ -29,21 +29,22 @@ export function useGetAllDomain() {
   })
 }
 
-export function useGetCategoryById(id: string | number) {
+export function useGetCategoryById(id: string) {
   return useQuery({
     queryKey: ['category', id],
-    queryFn: () => getCategoryById(id!)
+    queryFn: () => getCategoryById(id!),
+    enabled: !!id
   })
 }
 
-export function useGetTagsById(id: string | number) {
+export function useGetTagsById(id: string) {
   return useQuery({
     queryKey: ['tags', id],
     queryFn: () => getTagsById(id!)
   })
 }
 
-export function useGetDomainById(id: string | number) {
+export function useGetDomainById(id: string) {
   return useQuery({
     queryKey: ['domains', id],
     queryFn: () => getDomainsById(id!)

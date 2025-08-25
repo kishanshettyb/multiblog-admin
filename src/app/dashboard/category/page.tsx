@@ -27,6 +27,17 @@ import {
   FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog'
 import { useGetAllCategory, useGetCategoryById } from '@/services/query/category/category'
 import {
   useCreateCategory,
@@ -38,7 +49,9 @@ export type Category = {
   id: number
   documentId: string
   category_name: string
-  slug: string
+  category_url: string
+  domains: string
+  domain_name?: string
   category_status: string
   createdAt: string
   updatedAt: string
@@ -47,50 +60,63 @@ export type Category = {
 
 const formSchema = z.object({
   category_name: z.string().min(1, { message: 'Category name is required' }),
-  slug: z.string().min(1, { message: 'Slug is required' }),
-  category_status: z.enum(['active', 'inactive'])
+  category_url: z.string().min(1, { message: 'Category URL is required' })
 })
 
 export default function CategoryTable() {
-  const { data, isLoading } = useGetAllCategory()
+  const { data } = useGetAllCategory()
+
   const deleteMutation = useDeleteCategory()
   const createMutation = useCreateCategory()
   const updateMutation = useUpdateCategory()
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [editingCategory, setEditingCategory] = React.useState<Category | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [categoryToDelete, setCategoryToDelete] = React.useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       category_name: '',
-      slug: '',
-      category_status: 'active'
+      category_url: ''
     }
   })
 
-  // Use the hook with proper typing and enabled condition
-  const { data: categoryData } = useGetCategoryById(Number(editingCategory?.id))
+  const { data: categoryData } = useGetCategoryById(editingCategory?.documentId)
 
   React.useEffect(() => {
-    if (editingCategory) {
-      // Use the editingCategory data directly since it already contains all the fields we need
+    if (categoryData?.data) {
       form.reset({
-        category_name: editingCategory.category_name,
-        slug: editingCategory.slug,
-        category_status: editingCategory.category_status as 'active' | 'inactive'
+        category_name: categoryData.data.data.category_name,
+        category_url: categoryData.data.datacategory_url
       })
     } else {
       form.reset({
         category_name: '',
-        slug: '',
-        category_status: 'active'
+        category_url: ''
       })
     }
-  }, [editingCategory])
+  }, [categoryData, form])
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this category?')) {
-      deleteMutation.mutate(id)
+  const handleDelete = (documentId: string) => {
+    setCategoryToDelete(documentId)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (categoryToDelete) {
+      deleteMutation.mutate(categoryToDelete, {
+        onSuccess: () => {
+          toast.success('Category deleted successfully')
+          setDeleteDialogOpen(false)
+          setCategoryToDelete(null)
+        },
+        onError: () => {
+          toast.error('Failed to delete category')
+          setDeleteDialogOpen(false)
+          setCategoryToDelete(null)
+        }
+      })
     }
   }
 
@@ -103,14 +129,13 @@ export default function CategoryTable() {
     const payload = {
       data: {
         category_name: values.category_name,
-        slug: values.slug,
-        category_status: values.category_status
+        category_url: values.category_url
       }
     }
 
     if (editingCategory) {
       updateMutation.mutate(
-        { id: editingCategory.id, payload },
+        { id: editingCategory.documentId, payload },
         {
           onSuccess: () => {
             setIsDialogOpen(false)
@@ -176,22 +201,11 @@ export default function CategoryTable() {
       cell: ({ row }) => <div className="capitalize">{row.getValue('category_name')}</div>
     },
     {
-      accessorKey: 'slug',
-      header: 'Slug',
-      cell: ({ row }) => <div className="lowercase">{row.getValue('slug')}</div>
+      accessorKey: 'category_url',
+      header: 'Category URL',
+      cell: ({ row }) => <div className="lowercase">{row.getValue('category_url')}</div>
     },
-    {
-      accessorKey: 'category_status',
-      header: 'Status',
-      cell: ({ row }) => {
-        const status = row.getValue('category_status') as string
-        return (
-          <div className={`capitalize ${status === 'active' ? 'text-green-500' : 'text-red-500'}`}>
-            {status}
-          </div>
-        )
-      }
-    },
+
     {
       accessorKey: 'createdAt',
       header: 'Created At',
@@ -219,14 +233,37 @@ export default function CategoryTable() {
             <Button size="sm" onClick={() => handleEdit(category)}>
               Edit
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDelete(category.id)}
-              disabled={deleteMutation.isPending}
+            <AlertDialog
+              open={deleteDialogOpen && categoryToDelete === category.documentId}
+              onOpenChange={setDeleteDialogOpen}
             >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </Button>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(category.documentId)}
+                >
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the category
+                    {category.category_name} and remove it from our servers.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setCategoryToDelete(null)}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
+                    {deleteMutation.isPending ? 'Deleting...' : 'Continue'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )
       }
@@ -234,8 +271,8 @@ export default function CategoryTable() {
   ]
 
   return (
-    <div className="w-screen">
-      <div className="overflow-x-auto w-3/4">
+    <>
+      <div className="w-full p-4">
         <div className="flex justify-end mb-4">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -261,44 +298,34 @@ export default function CategoryTable() {
                       <FormItem>
                         <FormLabel>Category Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter category name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="slug"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Slug</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter slug" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="category_status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <FormControl>
-                          <select
-                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          <Input
+                            placeholder="Enter category name"
                             {...field}
-                          >
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                          </select>
+                            value={field.value || ''}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="category_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter category URL"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="flex justify-end gap-2">
                     <Button
                       type="button"
@@ -326,8 +353,11 @@ export default function CategoryTable() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+
+      <div className="px-4">
         <DataTable columns={columns} data={data?.data?.data || []} />
       </div>
-    </div>
+    </>
   )
 }
