@@ -5,7 +5,7 @@ import axios from 'axios'
 // const token = Cookies.get('token');
 
 const token =
-  '46afdc3df26035f644a252317eed34995642d3dc9d13d48fd4e2780505d8653b7ac62d8b70a85296c7bd5e8d87b2b2fe9773f54426c7189e81e5daf4eeadcc851e17f73166d085fefa8d13e02053c0e64ef17f5ee32875b5d177238fa4642af14f80e90e887a23e336765b67c1232b3432153d8f00f426cf168c11955a87b506'
+  'c3a883b53e877e922a38b731c7c183658c580af00d53d9e84c8c86c298839eb1c77f309737d1400bc4b315d6af98ea8a49e842ff77da340aa92e1284c54a4513bb9632a4d5ad1bf53f8c056351f4a219ee14bc9048dfaff4e272b3fd20ff64aa28aff9aecc123b25601154f9c62b8a660c31ad8129e49fc0c3625a6ec07e3295'
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASE_URL,
   headers: {
@@ -17,16 +17,16 @@ export const getAllCategory = async () => {
   return await axiosInstance.get('categories')
 }
 
-export const getCategoryById = async (id: string | number) => {
-  return await axiosInstance.get(`categories?id=${id}`)
+export const getCategoryById = async (id: string) => {
+  return await axiosInstance.get(`categories/${id}`)
 }
 
-export const getTagsById = async (id: string | number) => {
-  return await axiosInstance.get(`tags?id=${id}`)
+export const getTagsById = async (id: string) => {
+  return await axiosInstance.get(`tags/${id}`)
 }
 
-export const getDomainsById = async (id: string | number) => {
-  return await axiosInstance.get(`domains?id=${id}`)
+export const getDomainsById = async (id: string) => {
+  return await axiosInstance.get(`domains/${id}`)
 }
 export const getAllTags = async () => {
   return await axiosInstance.get('tags')
@@ -48,26 +48,26 @@ export const createDomains = async (payload) => {
   await axiosInstance.post('domains', payload)
 }
 
-export const updateCategory = async (id: string | number, payload) => {
-  await axiosInstance.put(`categories?id=${id}`, payload)
+export const updateCategory = async (id: string, payload) => {
+  await axiosInstance.put(`categories/${id}`, payload)
 }
 
-export const updateTags = async (id: string | number, payload) => {
-  await axiosInstance.put(`tags?id=${id}`, payload)
+export const updateTags = async (id: string, payload) => {
+  await axiosInstance.put(`tags/${id}`, payload)
 }
 
-export const updateDomains = async (id: string | number, payload) => {
-  await axiosInstance.put(`domains?id=${id}`, payload)
+export const updateDomains = async (id: string, payload) => {
+  await axiosInstance.put(`domains/${id}`, payload)
 }
 
-export const deleteCategory = async (id: string | number) => {
-  await axiosInstance.delete(`categories?id=${id}`)
+export const deleteCategory = async (id: string) => {
+  await axiosInstance.delete(`categories/${id}`)
 }
 
-export const deleteTags = async (id: string | number) => {
-  await axiosInstance.delete(`tags?id=${id}`)
+export const deleteTags = async (id: string) => {
+  await axiosInstance.delete(`tags/${id}`)
 }
 
-export const deleteDomains = async (id: string | number) => {
-  await axiosInstance.delete(`domains?id=${id}`)
+export const deleteDomains = async (id: string) => {
+  await axiosInstance.delete(`domains/${id}`)
 }

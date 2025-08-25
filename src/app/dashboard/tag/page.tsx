@@ -27,6 +27,17 @@ import {
   FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog'
 import { useGetAllTag, useGetTagsById } from '@/services/query/category/category'
 import { useCreateTags, useDeleteTags, useUpdateTags } from '@/services/mutation/category/category'
 
@@ -34,7 +45,7 @@ export type Tag = {
   id: number
   documentId: string
   tag_name: string
-  slug: string
+  tag_url: string
   createdAt: string
   updatedAt: string
   publishedAt: string
@@ -42,7 +53,7 @@ export type Tag = {
 
 const formSchema = z.object({
   tag_name: z.string().min(1, { message: 'Tag name is required' }),
-  slug: z.string().min(1, { message: 'Slug is required' })
+  tag_url: z.string().min(1, { message: 'Tag URL is required' })
 })
 
 export default function TagTable() {
@@ -52,37 +63,54 @@ export default function TagTable() {
   const updateMutation = useUpdateTags()
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [editingTag, setEditingTag] = React.useState<Tag | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [tagToDelete, setTagToDelete] = React.useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       tag_name: '',
-      slug: ''
+      tag_url: ''
     }
   })
 
-  // Use the hook with proper typing and enabled condition
-  const { data: tagData } = useGetTagsById(editingTag?.id?.toString() || '', {
-    enabled: !!editingTag?.id
+  const { data: tagData } = useGetTagsById(editingTag?.documentId || '', {
+    enabled: !!editingTag?.documentId
   })
 
   React.useEffect(() => {
-    if (editingTag) {
+    if (tagData?.data) {
       form.reset({
-        tag_name: editingTag.tag_name,
-        slug: editingTag.slug
+        tag_name: tagData.data.tag_name,
+        tag_url: tagData.data.tag_url
       })
     } else {
       form.reset({
         tag_name: '',
-        slug: ''
+        tag_url: ''
       })
     }
-  }, [editingTag])
+  }, [tagData, form])
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this tag?')) {
-      deleteMutation.mutate(id)
+  const handleDelete = (documentId: string) => {
+    setTagToDelete(documentId)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (tagToDelete) {
+      deleteMutation.mutate(tagToDelete, {
+        onSuccess: () => {
+          toast.success('Tag deleted successfully')
+          setDeleteDialogOpen(false)
+          setTagToDelete(null)
+        },
+        onError: () => {
+          toast.error('Failed to delete tag')
+          setDeleteDialogOpen(false)
+          setTagToDelete(null)
+        }
+      })
     }
   }
 
@@ -95,13 +123,13 @@ export default function TagTable() {
     const payload = {
       data: {
         tag_name: values.tag_name,
-        slug: values.slug
+        tag_url: values.tag_url
       }
     }
 
     if (editingTag) {
       updateMutation.mutate(
-        { id: editingTag.id, payload },
+        { id: editingTag.documentId, payload },
         {
           onSuccess: () => {
             setIsDialogOpen(false)
@@ -167,9 +195,9 @@ export default function TagTable() {
       cell: ({ row }) => <div className="capitalize">{row.getValue('tag_name')}</div>
     },
     {
-      accessorKey: 'slug',
-      header: 'Slug',
-      cell: ({ row }) => <div className="lowercase">{row.getValue('slug')}</div>
+      accessorKey: 'tag_url',
+      header: 'Tag URL',
+      cell: ({ row }) => <div className="lowercase">{row.getValue('tag_url')}</div>
     },
     {
       accessorKey: 'createdAt',
@@ -198,14 +226,35 @@ export default function TagTable() {
             <Button size="sm" onClick={() => handleEdit(tag)}>
               Edit
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDelete(tag.id)}
-              disabled={deleteMutation.isPending}
+            <AlertDialog
+              open={deleteDialogOpen && tagToDelete === tag.documentId}
+              onOpenChange={setDeleteDialogOpen}
             >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </Button>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(tag.documentId)}
+                >
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the tag
+                    {tag.tag_name} and remove it from our servers.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setTagToDelete(null)}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
+                    {deleteMutation.isPending ? 'Deleting...' : 'Continue'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )
       }
@@ -213,8 +262,8 @@ export default function TagTable() {
   ]
 
   return (
-    <div className="w-screen">
-      <div className="overflow-x-auto w-3/4">
+    <>
+      <div className="w-full p-4">
         <div className="flex justify-end mb-4">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -240,7 +289,11 @@ export default function TagTable() {
                       <FormItem>
                         <FormLabel>Tag Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter tag name" {...field} />
+                          <Input
+                            placeholder="Enter tag name"
+                            {...field}
+                            value={field.value || ''}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -248,12 +301,12 @@ export default function TagTable() {
                   />
                   <FormField
                     control={form.control}
-                    name="slug"
+                    name="tag_url"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Slug</FormLabel>
+                        <FormLabel>Tag URL</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter slug" {...field} />
+                          <Input placeholder="Enter tag URL" {...field} value={field.value || ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -286,8 +339,11 @@ export default function TagTable() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+
+      <div className="px-4">
         <DataTable columns={columns} data={data?.data?.data || []} />
       </div>
-    </div>
+    </>
   )
 }

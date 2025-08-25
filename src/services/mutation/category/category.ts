@@ -106,7 +106,7 @@ export function useUpdateCategory() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string | number; payload }) => updateCategory(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload }) => updateCategory(id, payload),
     onMutate: () => {
       console.log('mutate!!!')
     },
@@ -131,7 +131,7 @@ export function useUpdateTags() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string | number; payload }) => updateTags(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload }) => updateTags(id, payload),
     onMutate: () => {
       console.log('mutate!!!')
     },
@@ -156,7 +156,7 @@ export function useUpdateDomains() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string | number; payload }) => updateDomains(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload }) => updateDomains(id, payload),
     onMutate: () => {
       console.log('mutate!!!')
     },
@@ -181,7 +181,7 @@ export function useDeleteCategory() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string | number) => deleteCategory(id),
+    mutationFn: (id: string) => deleteCategory(id),
     onMutate: () => {
       console.log('mutate!!!')
     },
@@ -205,7 +205,7 @@ export function useDeleteDomain() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string | number) => deleteDomains(id),
+    mutationFn: (id: string) => deleteDomains(id),
     onMutate: () => {
       console.log('mutate!!!')
     },
@@ -230,7 +230,7 @@ export function useDeleteTags() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string | number) => deleteTags(id),
+    mutationFn: (id: string) => deleteTags(id),
     onMutate: () => {
       console.log('mutate!!!')
     },
