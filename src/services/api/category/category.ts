@@ -17,12 +17,20 @@ export const getAllCategory = async () => {
   return await axiosInstance.get('categories')
 }
 
+export const getAllPosts = async () => {
+  return await axiosInstance.get('blogposts')
+}
+
 export const getCategoryById = async (id: string) => {
   return await axiosInstance.get(`categories/${id}`)
 }
 
 export const getTagsById = async (id: string) => {
   return await axiosInstance.get(`tags/${id}`)
+}
+
+export const getPostById = async (id: string) => {
+  return await axiosInstance.get(`blogposts/${id}`)
 }
 
 export const getDomainsById = async (id: string) => {
@@ -40,6 +48,10 @@ export const createCategorys = async (payload) => {
   await axiosInstance.post('categories', payload)
 }
 
+export const createPost = async (payload) => {
+  await axiosInstance.post('blogposts', payload)
+}
+
 export const createTags = async (payload) => {
   await axiosInstance.post('tags', payload)
 }
@@ -52,6 +64,10 @@ export const updateCategory = async (id: string, payload) => {
   await axiosInstance.put(`categories/${id}`, payload)
 }
 
+export const updatePost = async (id: string, payload) => {
+  await axiosInstance.put(`blogposts/${id}`, payload)
+}
+
 export const updateTags = async (id: string, payload) => {
   await axiosInstance.put(`tags/${id}`, payload)
 }
@@ -62,6 +78,10 @@ export const updateDomains = async (id: string, payload) => {
 
 export const deleteCategory = async (id: string) => {
   await axiosInstance.delete(`categories/${id}`)
+}
+
+export const deletePost = async (id: string) => {
+  await axiosInstance.delete(`blogposts/${id}`)
 }
 
 export const deleteTags = async (id: string) => {

@@ -34,6 +34,11 @@ const items = [
     icon: Search
   },
   {
+    title: 'Post',
+    url: '/dashboard/post',
+    icon: Search
+  },
+  {
     title: 'Settings',
     url: '#',
     icon: Settings
