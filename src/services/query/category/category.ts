@@ -1,9 +1,11 @@
 import {
   getAllCategory,
   getAllDomain,
+  getAllPosts,
   getAllTags,
   getCategoryById,
   getDomainsById,
+  getPostById,
   getTagsById
 } from '@/services/api/category/category'
 import { useQuery } from '@tanstack/react-query'
@@ -14,7 +16,12 @@ export function useGetAllCategory() {
     queryFn: () => getAllCategory()
   })
 }
-
+export function useGetAllPosts() {
+  return useQuery({
+    queryKey: ['posts'],
+    queryFn: () => getAllPosts()
+  })
+}
 export function useGetAllTag() {
   return useQuery({
     queryKey: ['tags'],
@@ -33,6 +40,14 @@ export function useGetCategoryById(id: string) {
   return useQuery({
     queryKey: ['category', id],
     queryFn: () => getCategoryById(id!),
+    enabled: !!id
+  })
+}
+
+export function useGetPostById(id: string) {
+  return useQuery({
+    queryKey: ['posts', id],
+    queryFn: () => getPostById(id!),
     enabled: !!id
   })
 }
