@@ -15,13 +15,13 @@ const axiosInstance = axios.create({
 
 
 export const getAllPosts = async () => {
-  return await axiosInstance.get('blogposts')
+  return await axiosInstance.get('blogposts?populate=*')
 }
 
 
 
 export const getPostById = async (id: string) => {
-  return await axiosInstance.get(`blogposts/${id}`)
+  return await axiosInstance.get(`blogposts/${id}?populate=*`)
 }
 
 

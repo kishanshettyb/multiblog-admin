@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, Edit, Trash2, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -45,9 +45,13 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 import { useGetAllPosts, useGetPostById } from '@/services/query/posts/post'
 import { useCreatePost, useDeletePost, useUpdatePost } from '@/services/mutation/posts/post'
+import { useGetAllDomain } from '@/services/query/domain/domain'
+import { useGetAllCategory } from '@/services/query/category/category'
 
 const QuillEditor = dynamic(() => import('@/components/QuillEditor'), {
   ssr: false,
@@ -69,21 +73,37 @@ export type BlogPost = {
   createdAt: string
   updatedAt: string
   publishedAt: string
+  domains?: Array<{
+    id: number
+    documentId: string
+    domain_name: string
+    domain_url: string
+  }>
+  category?: {
+    id: number
+    documentId: string
+    category_name: string
+    category_url: string
+  }
 }
 
 const formSchema = z.object({
-  blog_post_title: z.string().min(1, { message: 'Post title is required' }),
-  blog_post_description: z.string().min(1, { message: 'Post description is required' }),
+  blog_post_title: z.string().min(1, { message: 'Blog post title is required' }),
+  blog_post_description: z.string().min(1, { message: 'Blog post description is required' }),
   blog_post_image_url: z
     .string()
     .url({ message: 'Please enter a valid URL' })
     .optional()
     .or(z.literal('')),
-  blog_post_status: z.enum(['publish', 'save', 'draft'])
+  blog_post_status: z.enum(['publish', 'save', 'draft']),
+  domain_id: z.string().min(1, { message: 'Please select a domain' }),
+  category_id: z.string().min(1, { message: 'Please select a category' })
 })
 
 export default function BlogPostTable() {
-  const { data } = useGetAllPosts()
+  const { data: postsData } = useGetAllPosts()
+  const { data: domainsData } = useGetAllDomain()
+  const { data: categoriesData } = useGetAllCategory()
   const [editorContent, setEditorContent] = React.useState<unknown>(null)
   const quillEditorRef = React.useRef<unknown>(null)
 
@@ -91,9 +111,9 @@ export default function BlogPostTable() {
   const createMutation = useCreatePost()
   const updateMutation = useUpdatePost()
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
-  const [editingPost, setEditingPost] = React.useState<BlogPost | null>(null)
+  const [editingBlogPost, setEditingBlogPost] = React.useState<BlogPost | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
-  const [postToDelete, setPostToDelete] = React.useState<string | null>(null)
+  const [blogPostToDelete, setBlogPostToDelete] = React.useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -101,37 +121,42 @@ export default function BlogPostTable() {
       blog_post_title: '',
       blog_post_description: '',
       blog_post_image_url: '',
-      blog_post_status: 'save'
+      blog_post_status: 'save',
+      domain_id: '',
+      category_id: ''
     }
   })
 
-  const { data: postData } = useGetPostById(editingPost?.documentId || '')
+  const { data: blogPostData } = useGetPostById(editingBlogPost?.documentId || '')
 
   React.useEffect(() => {
-    if (postData?.data) {
+    if (blogPostData?.data) {
+      const post = blogPostData.data.data
       form.reset({
-        blog_post_title: postData.data.data.blog_post_title,
-        blog_post_description: postData.data.data.blog_post_description,
-        blog_post_image_url: postData.data.data.blog_post_image_url,
-        blog_post_status: postData.data.data.blog_post_status
+        blog_post_title: post.blog_post_title,
+        blog_post_description: post.blog_post_description,
+        blog_post_image_url: post.blog_post_image_url,
+        blog_post_status: post.blog_post_status,
+        domain_id: post.domains && post.domains.length > 0 ? post.domains[0].documentId : '',
+        category_id: post.category ? post.category.documentId : ''
       })
 
       // Set the editor content in the expected structured format
-      if (postData.data.data.blog_post_content) {
+      if (post.blog_post_content) {
         let contentToSet
 
-        if (Array.isArray(postData.data.data.blog_post_content)) {
-          contentToSet = [...postData.data.data.blog_post_content]
-        } else if (typeof postData.data.data.blog_post_content === 'string') {
+        if (Array.isArray(post.blog_post_content)) {
+          contentToSet = [...post.blog_post_content]
+        } else if (typeof post.blog_post_content === 'string') {
           // If content is stored as string, try to parse it
           try {
-            contentToSet = JSON.parse(postData.data.data.blog_post_content)
+            contentToSet = JSON.parse(post.blog_post_content)
           } catch {
             // If parsing fails, create a simple paragraph with the text
             contentToSet = [
               {
                 type: 'paragraph',
-                children: [{ text: postData.data.data.blog_post_content, type: 'text' }]
+                children: [{ text: post.blog_post_content, type: 'text' }]
               }
             ]
           }
@@ -148,43 +173,45 @@ export default function BlogPostTable() {
         blog_post_title: '',
         blog_post_description: '',
         blog_post_image_url: '',
-        blog_post_status: 'save'
+        blog_post_status: 'save',
+        domain_id: '',
+        category_id: ''
       })
       setEditorContent(null)
     }
-  }, [postData, form, isDialogOpen])
+  }, [blogPostData, form, isDialogOpen])
 
   React.useEffect(() => {
     if (!isDialogOpen) {
-      setEditingPost(null)
+      setEditingBlogPost(null)
       setEditorContent(null)
     }
   }, [isDialogOpen])
 
   const handleDelete = (documentId: string) => {
-    setPostToDelete(documentId)
+    setBlogPostToDelete(documentId)
     setDeleteDialogOpen(true)
   }
 
   const confirmDelete = () => {
-    if (postToDelete) {
-      deleteMutation.mutate(postToDelete, {
+    if (blogPostToDelete) {
+      deleteMutation.mutate(blogPostToDelete, {
         onSuccess: () => {
-          toast.success('Post deleted successfully')
+          toast.success('Blog post deleted successfully')
           setDeleteDialogOpen(false)
-          setPostToDelete(null)
+          setBlogPostToDelete(null)
         },
         onError: () => {
-          toast.error('Failed to delete post')
+          toast.error('Failed to delete blog post')
           setDeleteDialogOpen(false)
-          setPostToDelete(null)
+          setBlogPostToDelete(null)
         }
       })
     }
   }
 
-  const handleEdit = (post: BlogPost) => {
-    setEditingPost(post)
+  const handleEdit = (blogPost: BlogPost) => {
+    setEditingBlogPost(blogPost)
     setIsDialogOpen(true)
   }
 
@@ -195,23 +222,37 @@ export default function BlogPostTable() {
     const payload = {
       blog_post_title: values.blog_post_title,
       blog_post_description: values.blog_post_description,
-      blog_post_content: finalContent, // Use the structured content from Quill
+      blog_post_content: finalContent,
       blog_post_image_url: values.blog_post_image_url,
-      blog_post_status: values.blog_post_status
+      blog_post_status: values.blog_post_status,
+      domains: {
+        connect: [{
+          id: domainsData?.data?.data?.find(d => d.documentId === values.domain_id)?.id,
+          documentId: values.domain_id,
+          isTemporary: true
+        }]
+      },
+      category: {
+        connect: [{
+          id: categoriesData?.data?.data?.find(c => c.documentId === values.category_id)?.id,
+          documentId: values.category_id,
+          isTemporary: true
+        }]
+      }
     }
 
-    if (editingPost) {
+    if (editingBlogPost) {
       updateMutation.mutate(
-        { id: editingPost.documentId, payload: { data: payload } },
+        { id: editingBlogPost.documentId, payload: { data: payload } },
         {
           onSuccess: () => {
             setIsDialogOpen(false)
-            setEditingPost(null)
-            toast.success('Post updated successfully')
+            setEditingBlogPost(null)
+            toast.success('Blog post updated successfully')
           },
           onError: (error) => {
             console.error('Update error:', error)
-            toast.error('Failed to update post')
+            toast.error('Failed to update blog post')
           }
         }
       )
@@ -221,14 +262,27 @@ export default function BlogPostTable() {
         {
           onSuccess: () => {
             setIsDialogOpen(false)
-            toast.success('Post created successfully')
+            toast.success('Blog post created successfully')
           },
           onError: (error) => {
             console.error('Create error:', error)
-            toast.error('Failed to create post')
+            toast.error('Failed to create blog post')
           }
         }
       )
+    }
+  }
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'publish':
+        return 'success'
+      case 'save':
+        return 'secondary'
+      case 'draft':
+        return 'outline'
+      default:
+        return 'outline'
     }
   }
 
@@ -269,28 +323,95 @@ export default function BlogPostTable() {
     },
     {
       accessorKey: 'blog_post_title',
-      header: 'Post Title',
-      cell: ({ row }) => <div className="capitalize">{row.getValue('blog_post_title')}</div>
+      header: 'Title',
+      cell: ({ row }) => (
+        <div className="max-w-[200px] truncate font-medium" title={row.getValue('blog_post_title')}>
+          {row.getValue('blog_post_title')}
+        </div>
+      )
+    },
+    {
+      accessorKey: 'blog_post_description',
+      header: 'Description',
+      cell: ({ row }) => (
+        <div className="max-w-[200px] truncate" title={row.getValue('blog_post_description')}>
+          {row.getValue('blog_post_description')}
+        </div>
+      )
+    },
+    {
+      accessorKey: 'domains',
+      header: 'Domain',
+      cell: ({ row }) => {
+        const domains = row.original.domains
+        return (
+          <div className="max-w-[120px]">
+            {domains && domains.length > 0 ? (
+              <Badge variant="secondary" className="truncate">
+                {domains[0].domain_name}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground">No domain</span>
+            )}
+          </div>
+        )
+      }
+    },
+    {
+      accessorKey: 'category',
+      header: 'Category',
+      cell: ({ row }) => {
+        const category = row.original.category
+        return (
+          <div className="max-w-[120px]">
+            {category ? (
+              <Badge variant="outline" className="truncate">
+                {category.category_name}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground">No category</span>
+            )}
+          </div>
+        )
+      }
     },
     {
       accessorKey: 'blog_post_status',
       header: 'Status',
-      cell: ({ row }) => <div className="capitalize">{row.getValue('blog_post_status')}</div>
+      cell: ({ row }) => (
+        <Badge variant={getStatusVariant(row.getValue('blog_post_status'))}>
+          {row.getValue('blog_post_status')}
+        </Badge>
+      )
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created At',
+      header: 'Created',
       cell: ({ row }) => {
         const date = new Date(row.getValue('createdAt'))
-        return date.toLocaleDateString()
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">
+              {date.toLocaleTimeString()}
+            </div>
+          </div>
+        )
       }
     },
     {
       accessorKey: 'updatedAt',
-      header: 'Updated At',
+      header: 'Updated',
       cell: ({ row }) => {
         const date = new Date(row.getValue('updatedAt'))
-        return date.toLocaleDateString()
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">
+              {date.toLocaleTimeString()}
+            </div>
+          </div>
+        )
       }
     },
     {
@@ -298,39 +419,45 @@ export default function BlogPostTable() {
       header: 'Actions',
       enableHiding: false,
       cell: ({ row }) => {
-        const post = row.original
+        const blogPost = row.original
         return (
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => handleEdit(post)}>
-              Edit
+          <div className="flex space-x-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => handleEdit(blogPost)}
+              className="h-8 w-8"
+            >
+              <Edit className="h-4 w-4" />
             </Button>
             <AlertDialog
-              open={deleteDialogOpen && postToDelete === post.documentId}
+              open={deleteDialogOpen && blogPostToDelete === blogPost.documentId}
               onOpenChange={setDeleteDialogOpen}
             >
               <AlertDialogTrigger asChild>
                 <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(post.documentId)}
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => handleDelete(blogPost.documentId)}
                 >
-                  Delete
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the post
-                    {post.blog_post_title} and remove it from our servers.
+                    This action cannot be undone. This will permanently delete the blog post
+                    "{blogPost.blog_post_title}" and remove it from our servers.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setPostToDelete(null)}>
+                  <AlertDialogCancel onClick={() => setBlogPostToDelete(null)}>
                     Cancel
                   </AlertDialogCancel>
                   <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
-                    {deleteMutation.isPending ? 'Deleting...' : 'Continue'}
+                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -342,36 +469,38 @@ export default function BlogPostTable() {
   ]
 
   return (
-    <>
-      <div className="w-full p-4">
-        <div className="flex justify-end mb-4">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Blog Posts</h1>
+            <p className="text-muted-foreground">
+              Manage your blog posts and content
+            </p>
+          </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                onClick={() => {
-                  setEditingPost(null)
-                  setIsDialogOpen(true)
-                }}
-              >
-                Create Post
+              <Button onClick={() => setEditingBlogPost(null)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Blog Post
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingPost ? 'Edit Post' : 'Create Post'}</DialogTitle>
+                <DialogTitle>{editingBlogPost ? 'Edit Blog Post' : 'Create Blog Post'}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="blog_post_title"
                       render={({ field }) => (
                         <FormItem className="md:col-span-2">
-                          <FormLabel>Post Title</FormLabel>
+                          <FormLabel>Blog Post Title</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Enter post title"
+                              placeholder="Enter blog post title"
                               {...field}
                               value={field.value || ''}
                             />
@@ -385,10 +514,10 @@ export default function BlogPostTable() {
                       name="blog_post_description"
                       render={({ field }) => (
                         <FormItem className="md:col-span-2">
-                          <FormLabel>Post Description</FormLabel>
+                          <FormLabel>Blog Post Description</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Enter post description"
+                              placeholder="Enter blog post description"
                               {...field}
                               value={field.value || ''}
                             />
@@ -405,11 +534,59 @@ export default function BlogPostTable() {
                           <FormLabel>Featured Image URL</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Enter image URL"
+                              placeholder="https://example.com/image.jpg"
                               {...field}
                               value={field.value || ''}
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="domain_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Domain</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a domain" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {domainsData?.data?.data?.map((domain) => (
+                                <SelectItem key={domain.documentId} value={domain.documentId}>
+                                  {domain.domain_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="category_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categoriesData?.data?.data?.map((category) => (
+                                <SelectItem key={category.documentId} value={category.documentId}>
+                                  {category.category_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -437,6 +614,7 @@ export default function BlogPostTable() {
                       )}
                     />
                   </div>
+                  
                   <FormItem>
                     <FormLabel>Content</FormLabel>
                     <QuillEditor
@@ -445,13 +623,14 @@ export default function BlogPostTable() {
                       onContentChange={setEditorContent}
                     />
                   </FormItem>
-                  <div className="flex justify-end gap-2 pt-4">
+                  
+                  <div className="flex justify-end gap-4 pt-4">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => {
                         setIsDialogOpen(false)
-                        setEditingPost(null)
+                        setEditingBlogPost(null)
                       }}
                     >
                       Cancel
@@ -462,7 +641,7 @@ export default function BlogPostTable() {
                     >
                       {createMutation.isPending || updateMutation.isPending
                         ? 'Saving...'
-                        : editingPost
+                        : editingBlogPost
                           ? 'Update'
                           : 'Create'}
                     </Button>
@@ -472,11 +651,20 @@ export default function BlogPostTable() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      <div className="px-4">
-        <DataTable columns={columns} data={data?.data?.data || []} />
+        <Card>
+          <CardHeader>
+            <CardTitle>All Blog Posts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable 
+              columns={columns} 
+              data={postsData?.data?.data || []} 
+              className="w-full"
+            />
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   )
 }

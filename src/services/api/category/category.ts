@@ -13,13 +13,13 @@ const axiosInstance = axios.create({
 })
 
 export const getAllCategory = async () => {
-  return await axiosInstance.get('categories')
+  return await axiosInstance.get('categories?populate=*')
 }
 
 
 
 export const getCategoryById = async (id: string) => {
-  return await axiosInstance.get(`categories/${id}`)
+  return await axiosInstance.get(`categories/${id}?populate=*`)
 }
 
 
