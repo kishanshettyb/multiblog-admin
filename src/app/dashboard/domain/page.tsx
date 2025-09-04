@@ -38,12 +38,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
-import { useGetAllDomain, useGetDomainById } from '@/services/query/category/category'
+import { useGetAllDomain, useGetDomainById } from '@/services/query/domain/domain'
 import {
   useCreateDomains,
   useDeleteDomain,
   useUpdateDomains
-} from '@/services/mutation/category/category'
+} from '@/services/mutation/domain/domain'
 
 export type Domain = {
   id: number

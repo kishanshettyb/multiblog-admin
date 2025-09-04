@@ -46,8 +46,8 @@ import {
   SelectValue
 } from '@/components/ui/select'
 
-import { useGetAllPosts, useGetPostById } from '@/services/query/category/category'
-import { useCreatePost, useDeletePost, useUpdatePost } from '@/services/mutation/category/category'
+import { useGetAllPosts, useGetPostById } from '@/services/query/posts/post'
+import { useCreatePost, useDeletePost, useUpdatePost } from '@/services/mutation/posts/post'
 
 const QuillEditor = dynamic(() => import('@/components/QuillEditor'), {
   ssr: false,
