@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, Edit, Trash2, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -38,6 +38,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { useGetAllCategory, useGetCategoryById } from '@/services/query/category/category'
 import {
   useCreateCategory,
@@ -64,7 +67,7 @@ const formSchema = z.object({
 })
 
 export default function CategoryTable() {
-  const { data } = useGetAllCategory()
+  const { data: categoriesData } = useGetAllCategory()
 
   const deleteMutation = useDeleteCategory()
   const createMutation = useCreateCategory()
@@ -82,13 +85,14 @@ export default function CategoryTable() {
     }
   })
 
-  const { data: categoryData } = useGetCategoryById(editingCategory?.documentId)
+  const { data: categoryData } = useGetCategoryById(editingCategory?.documentId || '')
 
   React.useEffect(() => {
     if (categoryData?.data) {
+      const category = categoryData.data.data
       form.reset({
-        category_name: categoryData.data.data.category_name,
-        category_url: categoryData.data.datacategory_url
+        category_name: category.category_name,
+        category_url: category.category_url
       })
     } else {
       form.reset({
@@ -96,7 +100,13 @@ export default function CategoryTable() {
         category_url: ''
       })
     }
-  }, [categoryData, form])
+  }, [categoryData, form, isDialogOpen])
+
+  React.useEffect(() => {
+    if (!isDialogOpen) {
+      setEditingCategory(null)
+    }
+  }, [isDialogOpen])
 
   const handleDelete = (documentId: string) => {
     setCategoryToDelete(documentId)
@@ -160,6 +170,17 @@ export default function CategoryTable() {
     }
   }
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'success'
+      case 'inactive':
+        return 'secondary'
+      default:
+        return 'outline'
+    }
+  }
+
   const columns: ColumnDef<Category>[] = [
     {
       id: 'select',
@@ -198,28 +219,56 @@ export default function CategoryTable() {
     {
       accessorKey: 'category_name',
       header: 'Category Name',
-      cell: ({ row }) => <div className="capitalize">{row.getValue('category_name')}</div>
+      cell: ({ row }) => (
+        <div className="font-medium capitalize">{row.getValue('category_name')}</div>
+      )
     },
     {
       accessorKey: 'category_url',
       header: 'Category URL',
-      cell: ({ row }) => <div className="lowercase">{row.getValue('category_url')}</div>
+      cell: ({ row }) => (
+        <div className="max-w-[200px] truncate lowercase" title={row.getValue('category_url')}>
+          {row.getValue('category_url')}
+        </div>
+      )
     },
-
+    {
+      accessorKey: 'category_status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge variant={getStatusVariant(row.getValue('category_status') || 'active')}>
+          {row.getValue('category_status') || 'active'}
+        </Badge>
+      )
+    },
     {
       accessorKey: 'createdAt',
-      header: 'Created At',
+      header: 'Created',
       cell: ({ row }) => {
         const date = new Date(row.getValue('createdAt'))
-        return date.toLocaleDateString()
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">
+              {date.toLocaleTimeString()}
+            </div>
+          </div>
+        )
       }
     },
     {
       accessorKey: 'updatedAt',
-      header: 'Updated At',
+      header: 'Updated',
       cell: ({ row }) => {
         const date = new Date(row.getValue('updatedAt'))
-        return date.toLocaleDateString()
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">
+              {date.toLocaleTimeString()}
+            </div>
+          </div>
+        )
       }
     },
     {
@@ -229,9 +278,14 @@ export default function CategoryTable() {
       cell: ({ row }) => {
         const category = row.original
         return (
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => handleEdit(category)}>
-              Edit
+          <div className="flex space-x-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => handleEdit(category)}
+              className="h-8 w-8"
+            >
+              <Edit className="h-4 w-4" />
             </Button>
             <AlertDialog
               open={deleteDialogOpen && categoryToDelete === category.documentId}
@@ -239,11 +293,12 @@ export default function CategoryTable() {
             >
               <AlertDialogTrigger asChild>
                 <Button
-                  variant="destructive"
-                  size="sm"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={() => handleDelete(category.documentId)}
                 >
-                  Delete
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -251,7 +306,7 @@ export default function CategoryTable() {
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete the category
-                    {category.category_name} and remove it from our servers.
+                    "{category.category_name}" and remove it from our servers.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -259,7 +314,7 @@ export default function CategoryTable() {
                     Cancel
                   </AlertDialogCancel>
                   <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
-                    {deleteMutation.isPending ? 'Deleting...' : 'Continue'}
+                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -271,17 +326,19 @@ export default function CategoryTable() {
   ]
 
   return (
-    <>
-      <div className="w-full p-4">
-        <div className="flex justify-end mb-4">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+            <p className="text-muted-foreground">
+              Manage your blog categories
+            </p>
+          </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                onClick={() => {
-                  setEditingCategory(null)
-                  setIsDialogOpen(true)
-                }}
-              >
+              <Button onClick={() => setEditingCategory(null)}>
+                <Plus className="mr-2 h-4 w-4" />
                 Create Category
               </Button>
             </DialogTrigger>
@@ -290,7 +347,7 @@ export default function CategoryTable() {
                 <DialogTitle>{editingCategory ? 'Edit Category' : 'Create Category'}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
                     control={form.control}
                     name="category_name"
@@ -325,8 +382,8 @@ export default function CategoryTable() {
                       </FormItem>
                     )}
                   />
-
-                  <div className="flex justify-end gap-2">
+                  
+                  <div className="flex justify-end gap-4 pt-4">
                     <Button
                       type="button"
                       variant="outline"
@@ -353,11 +410,20 @@ export default function CategoryTable() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      <div className="px-4">
-        <DataTable columns={columns} data={data?.data?.data || []} />
+        <Card>
+          <CardHeader>
+            <CardTitle>All Categories</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable 
+              columns={columns} 
+              data={categoriesData?.data?.data || []} 
+              className="w-full"
+            />
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   )
 }

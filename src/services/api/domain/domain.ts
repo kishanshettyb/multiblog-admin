@@ -17,12 +17,12 @@ const axiosInstance = axios.create({
 
 
 export const getDomainsById = async (id: string) => {
-  return await axiosInstance.get(`domains/${id}`)
+  return await axiosInstance.get(`domains/${id}?populate=*`)
 }
 
 
 export const getAllDomain = async () => {
-  return await axiosInstance.get('domains')
+  return await axiosInstance.get('domains?populate=*')
 }
 
 

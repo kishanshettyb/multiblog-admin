@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, Edit, Trash2, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -38,6 +38,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+
 import { useGetAllTag, useGetTagsById } from '@/services/query/tags/tags'
 import { useCreateTags, useDeleteTags, useUpdateTags } from '@/services/mutation/tags/tags'
 
@@ -57,7 +60,7 @@ const formSchema = z.object({
 })
 
 export default function TagTable() {
-  const { data } = useGetAllTag()
+  const { data: tagsData } = useGetAllTag()
   const deleteMutation = useDeleteTags()
   const createMutation = useCreateTags()
   const updateMutation = useUpdateTags()
@@ -90,7 +93,13 @@ export default function TagTable() {
         tag_url: ''
       })
     }
-  }, [tagData, form])
+  }, [tagData, form, isDialogOpen])
+
+  React.useEffect(() => {
+    if (!isDialogOpen) {
+      setEditingTag(null)
+    }
+  }, [isDialogOpen])
 
   const handleDelete = (documentId: string) => {
     setTagToDelete(documentId)
@@ -192,27 +201,47 @@ export default function TagTable() {
     {
       accessorKey: 'tag_name',
       header: 'Tag Name',
-      cell: ({ row }) => <div className="capitalize">{row.getValue('tag_name')}</div>
+      cell: ({ row }) => (
+        <div className="font-medium capitalize">{row.getValue('tag_name')}</div>
+      )
     },
     {
       accessorKey: 'tag_url',
       header: 'Tag URL',
-      cell: ({ row }) => <div className="lowercase">{row.getValue('tag_url')}</div>
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="lowercase">
+          {row.getValue('tag_url')}
+        </Badge>
+      )
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created At',
+      header: 'Created',
       cell: ({ row }) => {
         const date = new Date(row.getValue('createdAt'))
-        return date.toLocaleDateString()
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">
+              {date.toLocaleTimeString()}
+            </div>
+          </div>
+        )
       }
     },
     {
       accessorKey: 'updatedAt',
-      header: 'Updated At',
+      header: 'Updated',
       cell: ({ row }) => {
         const date = new Date(row.getValue('updatedAt'))
-        return date.toLocaleDateString()
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">
+              {date.toLocaleTimeString()}
+            </div>
+          </div>
+        )
       }
     },
     {
@@ -222,9 +251,14 @@ export default function TagTable() {
       cell: ({ row }) => {
         const tag = row.original
         return (
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => handleEdit(tag)}>
-              Edit
+          <div className="flex space-x-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => handleEdit(tag)}
+              className="h-8 w-8"
+            >
+              <Edit className="h-4 w-4" />
             </Button>
             <AlertDialog
               open={deleteDialogOpen && tagToDelete === tag.documentId}
@@ -232,11 +266,12 @@ export default function TagTable() {
             >
               <AlertDialogTrigger asChild>
                 <Button
-                  variant="destructive"
-                  size="sm"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={() => handleDelete(tag.documentId)}
                 >
-                  Delete
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -244,13 +279,15 @@ export default function TagTable() {
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete the tag
-                    {tag.tag_name} and remove it from our servers.
+                    "{tag.tag_name}" and remove it from our servers.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setTagToDelete(null)}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel onClick={() => setTagToDelete(null)}>
+                    Cancel
+                  </AlertDialogCancel>
                   <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
-                    {deleteMutation.isPending ? 'Deleting...' : 'Continue'}
+                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -262,17 +299,19 @@ export default function TagTable() {
   ]
 
   return (
-    <>
-      <div className="w-full p-4">
-        <div className="flex justify-end mb-4">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Tags</h1>
+            <p className="text-muted-foreground">
+              Manage your tags and categories
+            </p>
+          </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                onClick={() => {
-                  setEditingTag(null)
-                  setIsDialogOpen(true)
-                }}
-              >
+              <Button onClick={() => setEditingTag(null)}>
+                <Plus className="mr-2 h-4 w-4" />
                 Create Tag
               </Button>
             </DialogTrigger>
@@ -281,7 +320,7 @@ export default function TagTable() {
                 <DialogTitle>{editingTag ? 'Edit Tag' : 'Create Tag'}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
                     control={form.control}
                     name="tag_name"
@@ -306,13 +345,17 @@ export default function TagTable() {
                       <FormItem>
                         <FormLabel>Tag URL</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter tag URL" {...field} value={field.value || ''} />
+                          <Input 
+                            placeholder="Enter tag URL" 
+                            {...field} 
+                            value={field.value || ''} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-4 pt-4">
                     <Button
                       type="button"
                       variant="outline"
@@ -339,11 +382,20 @@ export default function TagTable() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      <div className="px-4">
-        <DataTable columns={columns} data={data?.data?.data || []} />
+        <Card>
+          <CardHeader>
+            <CardTitle>All Tags</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable 
+              columns={columns} 
+              data={tagsData?.data?.data || []} 
+              className="w-full"
+            />
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   )
 }

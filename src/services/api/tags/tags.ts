@@ -19,14 +19,14 @@ const axiosInstance = axios.create({
 
 
 export const getTagsById = async (id: string) => {
-    return await axiosInstance.get(`tags/${id}`)
+    return await axiosInstance.get(`tags/${id}?populate=*`)
 }
 
 
 
 
 export const getAllTags = async () => {
-    return await axiosInstance.get('tags')
+    return await axiosInstance.get('tags?populate=*')
 }
 
 

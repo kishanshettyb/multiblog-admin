@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, Edit, Trash2, Plus } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -38,6 +38,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { useGetAllDomain, useGetDomainById } from '@/services/query/domain/domain'
 import {
   useCreateDomains,
@@ -87,16 +97,16 @@ export default function DomainTable() {
     }
   })
 
-  const { data: domainData } = useGetDomainById(editingDomain?.documentId)
+  const { data: domainData } = useGetDomainById(editingDomain?.documentId || '')
 
   React.useEffect(() => {
     if (domainData?.data) {
       form.reset({
         domain_name: domainData.data.domain_name,
-        domain_url: domainData.data?.data.domain_url,
-        domain_status: domainData.data?.data.domain_status as 'active' | 'inactive',
-        logo_image_url: domainData.data?.data.logo_image_url || '',
-        icon_image_url: domainData.data?.data.icon_image_url || ''
+        domain_url: domainData.data.domain_url,
+        domain_status: domainData.data.domain_status as 'active' | 'inactive',
+        logo_image_url: domainData.data.logo_image_url || '',
+        icon_image_url: domainData.data.icon_image_url || ''
       })
     } else {
       form.reset({
@@ -107,7 +117,13 @@ export default function DomainTable() {
         icon_image_url: ''
       })
     }
-  }, [domainData, form])
+  }, [domainData, form, isDialogOpen])
+
+  React.useEffect(() => {
+    if (!isDialogOpen) {
+      setEditingDomain(null)
+    }
+  }, [isDialogOpen])
 
   const handleDelete = (documentId: string) => {
     setDomainToDelete(documentId)
@@ -174,6 +190,17 @@ export default function DomainTable() {
     }
   }
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'success'
+      case 'inactive':
+        return 'destructive'
+      default:
+        return 'outline'
+    }
+  }
+
   const columns: ColumnDef<Domain>[] = [
     {
       id: 'select',
@@ -212,24 +239,29 @@ export default function DomainTable() {
     {
       accessorKey: 'domain_name',
       header: 'Domain Name',
-      cell: ({ row }) => <div className="capitalize">{row.getValue('domain_name')}</div>
+      cell: ({ row }) => (
+        <div className="font-medium max-w-[150px] truncate" title={row.getValue('domain_name')}>
+          {row.getValue('domain_name')}
+        </div>
+      )
     },
     {
       accessorKey: 'domain_url',
       header: 'Domain URL',
-      cell: ({ row }) => <div className="lowercase">{row.getValue('domain_url')}</div>
+      cell: ({ row }) => (
+        <div className="max-w-[150px] truncate" title={row.getValue('domain_url')}>
+          {row.getValue('domain_url')}
+        </div>
+      )
     },
     {
       accessorKey: 'domain_status',
       header: 'Status',
-      cell: ({ row }) => {
-        const status = row.getValue('domain_status') as string
-        return (
-          <div className={`capitalize ${status === 'active' ? 'text-green-500' : 'text-red-500'}`}>
-            {status}
-          </div>
-        )
-      }
+      cell: ({ row }) => (
+        <Badge variant={getStatusVariant(row.getValue('domain_status') as string)}>
+          {row.getValue('domain_status') as string}
+        </Badge>
+      )
     },
     {
       accessorKey: 'logo_image_url',
@@ -237,9 +269,13 @@ export default function DomainTable() {
       cell: ({ row }) => {
         const logoUrl = row.getValue('logo_image_url') as string
         return logoUrl ? (
-          <img src={logoUrl} alt="Domain Logo" className="h-10 w-10 rounded-full object-cover" />
+          <img 
+            src={logoUrl} 
+            alt="Domain Logo" 
+            className="h-10 w-10 rounded-full object-cover border" 
+          />
         ) : (
-          <div className="text-gray-400">No logo</div>
+          <div className="text-muted-foreground text-sm">No logo</div>
         )
       }
     },
@@ -249,26 +285,44 @@ export default function DomainTable() {
       cell: ({ row }) => {
         const iconUrl = row.getValue('icon_image_url') as string
         return iconUrl ? (
-          <img src={iconUrl} alt="Domain Icon" className="h-10 w-10 rounded-full object-cover" />
+          <img 
+            src={iconUrl} 
+            alt="Domain Icon" 
+            className="h-10 w-10 rounded-full object-cover border" 
+          />
         ) : (
-          <div className="text-gray-400">No icon</div>
+          <div className="text-muted-foreground text-sm">No icon</div>
         )
       }
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created At',
+      header: 'Created',
       cell: ({ row }) => {
         const date = new Date(row.getValue('createdAt'))
-        return date.toLocaleDateString()
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">
+              {date.toLocaleTimeString()}
+            </div>
+          </div>
+        )
       }
     },
     {
       accessorKey: 'updatedAt',
-      header: 'Updated At',
+      header: 'Updated',
       cell: ({ row }) => {
         const date = new Date(row.getValue('updatedAt'))
-        return date.toLocaleDateString()
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">
+              {date.toLocaleTimeString()}
+            </div>
+          </div>
+        )
       }
     },
     {
@@ -278,9 +332,14 @@ export default function DomainTable() {
       cell: ({ row }) => {
         const domain = row.original
         return (
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => handleEdit(domain)}>
-              Edit
+          <div className="flex space-x-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => handleEdit(domain)}
+              className="h-8 w-8"
+            >
+              <Edit className="h-4 w-4" />
             </Button>
             <AlertDialog
               open={deleteDialogOpen && domainToDelete === domain.documentId}
@@ -288,11 +347,12 @@ export default function DomainTable() {
             >
               <AlertDialogTrigger asChild>
                 <Button
-                  variant="destructive"
-                  size="sm"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={() => handleDelete(domain.documentId)}
                 >
-                  Delete
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -300,7 +360,7 @@ export default function DomainTable() {
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete the domain
-                    {domain.domain_name} and remove it from our servers.
+                    "{domain.domain_name}" and remove it from our servers.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -308,7 +368,7 @@ export default function DomainTable() {
                     Cancel
                   </AlertDialogCancel>
                   <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
-                    {deleteMutation.isPending ? 'Deleting...' : 'Continue'}
+                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -320,114 +380,121 @@ export default function DomainTable() {
   ]
 
   return (
-    <>
-      <div className="w-full p-4">
-        <div className="flex justify-end mb-4">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Domains</h1>
+            <p className="text-muted-foreground">
+              Manage your domains and their settings
+            </p>
+          </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                onClick={() => {
-                  setEditingDomain(null)
-                  setIsDialogOpen(true)
-                }}
-              >
+              <Button onClick={() => setEditingDomain(null)}>
+                <Plus className="mr-2 h-4 w-4" />
                 Create Domain
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingDomain ? 'Edit Domain' : 'Create Domain'}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="domain_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Domain Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter domain name"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="domain_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Domain URL</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter domain URL"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="domain_status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <FormControl>
-                          <select
-                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            {...field}
-                          >
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="logo_image_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Logo URL (Optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter logo URL"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="icon_image_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Icon URL (Optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter icon URL"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex justify-end gap-2">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="domain_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Domain Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter domain name"
+                              {...field}
+                              value={field.value || ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="domain_url"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Domain URL</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://example.com"
+                              {...field}
+                              value={field.value || ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="domain_status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="inactive">Inactive</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="logo_image_url"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Logo Image URL (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://example.com/logo.png"
+                              {...field}
+                              value={field.value || ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="icon_image_url"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Icon Image URL (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://example.com/icon.png"
+                              {...field}
+                              value={field.value || ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end gap-4 pt-4">
                     <Button
                       type="button"
                       variant="outline"
@@ -454,11 +521,20 @@ export default function DomainTable() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      <div className="px-4">
-        <DataTable columns={columns} data={data?.data?.data || []} />
+        <Card>
+          <CardHeader>
+            <CardTitle>All Domains</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable 
+              columns={columns} 
+              data={data?.data?.data || []} 
+              className="w-full"
+            />
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   )
 }
