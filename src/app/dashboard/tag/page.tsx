@@ -38,8 +38,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
-import { useGetAllTag, useGetTagsById } from '@/services/query/category/category'
-import { useCreateTags, useDeleteTags, useUpdateTags } from '@/services/mutation/category/category'
+import { useGetAllTag, useGetTagsById } from '@/services/query/tags/tags'
+import { useCreateTags, useDeleteTags, useUpdateTags } from '@/services/mutation/tags/tags'
 
 export type Tag = {
   id: number

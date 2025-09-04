@@ -1,13 +1,16 @@
 
-import { createCategorys, deleteCategory, updateCategory } from '@/services/api/category/category'
+import { createDomains, deleteDomains, updateDomains } from '@/services/api/domain/domain'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-export function useCreateCategory() {
+
+
+
+export function useCreateDomains() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (payload) => createCategorys(payload),
+    mutationFn: (payload) => createDomains(payload),
     onMutate: () => {
       console.log('mutate!!!')
     },
@@ -17,17 +20,17 @@ export function useCreateCategory() {
     onSuccess: () => {
       console.log('success!!!')
 
-      toast('Categories has been created')
-      queryClient.invalidateQueries({ queryKey: ['category'] })
+      toast('Domains has been created')
+      queryClient.invalidateQueries({ queryKey: ['domains'] })
     },
     onSettled: async (_, error) => {
       console.log('settled**')
       if (error) {
         console.log('Show Error: ' + error)
 
-        toast('Unable to create Categories')
+        toast('Unable to create Domains')
       } else {
-        await queryClient.invalidateQueries({ queryKey: ['category'] })
+        await queryClient.invalidateQueries({ queryKey: ['domains'] })
       }
     }
   })
@@ -35,54 +38,63 @@ export function useCreateCategory() {
 
 
 
-export function useUpdateCategory() {
+
+
+export function useUpdateDomains() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload }) => updateCategory(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload }) => updateDomains(id, payload),
     onMutate: () => {
       console.log('mutate!!!')
     },
     onError: (error) => {
       console.log('error!!!', error)
-      toast('Unable to update category')
+      toast('Unable to update Domains')
     },
     onSuccess: () => {
       console.log('success!!!')
-      toast('Category has been updated')
+      toast('Domains has been updated')
     },
     onSettled: async (_, error) => {
       console.log('settled**')
       if (!error) {
-        await queryClient.invalidateQueries({ queryKey: ['categories'] })
+        await queryClient.invalidateQueries({ queryKey: ['domains'] })
       }
     }
   })
 }
 
 
-
-export function useDeleteCategory() {
+export function useDeleteDomain() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => deleteCategory(id),
+    mutationFn: (id: string) => deleteDomains(id),
     onMutate: () => {
       console.log('mutate!!!')
     },
     onError: (error) => {
       console.log('error!!!', error)
-      toast('Unable to delete categories')
+      toast('Unable to delete domain')
     },
     onSuccess: () => {
       console.log('success!!!')
-      toast('Categories has been deleted')
+      toast('Domain has been deleted')
     },
     onSettled: async (_, error) => {
       console.log('settled**')
       if (!error) {
-        await queryClient.invalidateQueries({ queryKey: ['category'] })
+        await queryClient.invalidateQueries({ queryKey: ['domains'] })
       }
     }
   })
 }
+
+
+
+
+
+
+
+

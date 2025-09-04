@@ -1,13 +1,15 @@
 
-import { createCategorys, deleteCategory, updateCategory } from '@/services/api/category/category'
+import { createTags, deleteTags, updateTags } from '@/services/api/tags/tags'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-export function useCreateCategory() {
+
+
+export function useCreateTags() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (payload) => createCategorys(payload),
+    mutationFn: (payload) => createTags(payload),
     onMutate: () => {
       console.log('mutate!!!')
     },
@@ -17,17 +19,17 @@ export function useCreateCategory() {
     onSuccess: () => {
       console.log('success!!!')
 
-      toast('Categories has been created')
-      queryClient.invalidateQueries({ queryKey: ['category'] })
+      toast('Tags has been created')
+      queryClient.invalidateQueries({ queryKey: ['tags'] })
     },
     onSettled: async (_, error) => {
       console.log('settled**')
       if (error) {
         console.log('Show Error: ' + error)
 
-        toast('Unable to create Categories')
+        toast('Unable to create Tags')
       } else {
-        await queryClient.invalidateQueries({ queryKey: ['category'] })
+        await queryClient.invalidateQueries({ queryKey: ['tags'] })
       }
     }
   })
@@ -35,26 +37,28 @@ export function useCreateCategory() {
 
 
 
-export function useUpdateCategory() {
+
+
+export function useUpdateTags() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload }) => updateCategory(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload }) => updateTags(id, payload),
     onMutate: () => {
       console.log('mutate!!!')
     },
     onError: (error) => {
       console.log('error!!!', error)
-      toast('Unable to update category')
+      toast('Unable to update Tags')
     },
     onSuccess: () => {
       console.log('success!!!')
-      toast('Category has been updated')
+      toast('Tags has been updated')
     },
     onSettled: async (_, error) => {
       console.log('settled**')
       if (!error) {
-        await queryClient.invalidateQueries({ queryKey: ['categories'] })
+        await queryClient.invalidateQueries({ queryKey: ['tags'] })
       }
     }
   })
@@ -62,27 +66,31 @@ export function useUpdateCategory() {
 
 
 
-export function useDeleteCategory() {
+
+
+export function useDeleteTags() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => deleteCategory(id),
+    mutationFn: (id: string) => deleteTags(id),
     onMutate: () => {
       console.log('mutate!!!')
     },
     onError: (error) => {
       console.log('error!!!', error)
-      toast('Unable to delete categories')
+      toast('Unable to delete tags')
     },
     onSuccess: () => {
       console.log('success!!!')
-      toast('Categories has been deleted')
+      toast('Tags has been deleted')
     },
     onSettled: async (_, error) => {
       console.log('settled**')
       if (!error) {
-        await queryClient.invalidateQueries({ queryKey: ['category'] })
+        await queryClient.invalidateQueries({ queryKey: ['tags'] })
       }
     }
   })
 }
+
+
