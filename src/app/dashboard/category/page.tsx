@@ -181,149 +181,116 @@ export default function CategoryTable() {
     }
   }
 
-  const columns: ColumnDef<Category>[] = [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false
-    },
-    {
-      accessorKey: 'id',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    {
-      accessorKey: 'category_name',
-      header: 'Category Name',
-      cell: ({ row }) => (
-        <div className="font-medium capitalize">{row.getValue('category_name')}</div>
-      )
-    },
-    {
-      accessorKey: 'category_url',
-      header: 'Category URL',
-      cell: ({ row }) => (
-        <div className="max-w-[200px] truncate lowercase" title={row.getValue('category_url')}>
-          {row.getValue('category_url')}
+ const columns: ColumnDef<Category>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false
+  },
+
+
+  {
+    accessorKey: 'category_name',
+    header: 'Category Name',
+    cell: ({ row }) => (
+      <div className="font-medium capitalize">{row.getValue('category_name')}</div>
+    )
+  },
+  {
+    accessorKey: 'category_url',
+    header: 'Category URL',
+    cell: ({ row }) => (
+      <Badge variant="secondary" className="lowercase">
+        {row.getValue('category_url')}
+      </Badge>
+    )
+  },
+  {
+    accessorKey: 'category_image_url',
+    header: 'Image URL',
+    cell: ({ row }) => {
+      const imageUrl = row.getValue('category_image_url') as string
+      return (
+        <div className="max-w-[150px] truncate text-xs text-muted-foreground">
+          {imageUrl || 'No image'}
         </div>
       )
-    },
-    {
-      accessorKey: 'category_status',
-      header: 'Status',
-      cell: ({ row }) => (
-        <Badge variant={getStatusVariant(row.getValue('category_status') || 'active')}>
-          {row.getValue('category_status') || 'active'}
-        </Badge>
-      )
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Created',
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('createdAt'))
-        return (
-          <div className="text-sm whitespace-nowrap">
-            {date.toLocaleDateString()}
-            <div className="text-xs text-muted-foreground">
-              {date.toLocaleTimeString()}
-            </div>
-          </div>
-        )
-      }
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('updatedAt'))
-        return (
-          <div className="text-sm whitespace-nowrap">
-            {date.toLocaleDateString()}
-            <div className="text-xs text-muted-foreground">
-              {date.toLocaleTimeString()}
-            </div>
-          </div>
-        )
-      }
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      enableHiding: false,
-      cell: ({ row }) => {
-        const category = row.original
-        return (
-          <div className="flex space-x-2">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => handleEdit(category)}
-              className="h-8 w-8"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <AlertDialog
-              open={deleteDialogOpen && categoryToDelete === category.documentId}
-              onOpenChange={setDeleteDialogOpen}
-            >
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDelete(category.documentId)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the category
-                    "{category.category_name}" and remove it from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setCategoryToDelete(null)}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
-                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )
-      }
     }
-  ]
+  },
+  {
+    accessorKey: 'domains',
+    header: 'Domains',
+    cell: ({ row }) => {
+      const domains = row.original.domains
+      return (
+        <div className="text-sm">
+          {domains && domains.length > 0 ? (
+            <Badge variant="outline">
+              {domains.length} domain{domains.length !== 1 ? 's' : ''}
+            </Badge>
+          ) : (
+            <span className="text-muted-foreground">No domains</span>
+          )}
+        </div>
+      )
+    }
+  },
+  {
+    accessorKey: 'createdAt',
+    header: 'Created',
+    cell: ({ row }) => {
+      const date = new Date(row.getValue('createdAt'))
+      return (
+        <div className="text-sm whitespace-nowrap">
+          {date.toLocaleDateString()}
+          <div className="text-xs text-muted-foreground">
+            {date.toLocaleTimeString()}
+          </div>
+        </div>
+      )
+    }
+  },
+ 
+  {
+    id: 'actions',
+    header: 'Actions',
+    enableHiding: false,
+    cell: ({ row }) => {
+      const category = row.original
+      return (
+        <div className="flex space-x-2">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => handleEdit(category)}
+            className="h-8 w-8"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        
+          
+        </div>
+      )
+    }
+  }
+]
 
   return (
     <div className="min-h-screen bg-background">

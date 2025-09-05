@@ -102,11 +102,11 @@ export default function DomainTable() {
   React.useEffect(() => {
     if (domainData?.data) {
       form.reset({
-        domain_name: domainData.data.domain_name,
-        domain_url: domainData.data.domain_url,
-        domain_status: domainData.data.domain_status as 'active' | 'inactive',
-        logo_image_url: domainData.data.logo_image_url || '',
-        icon_image_url: domainData.data.icon_image_url || ''
+        domain_name: domainData.data?.data?.domain_name,
+        domain_url: domainData.data?.data?.domain_url,
+        domain_status: domainData.data.data?.domain_status as 'active' | 'inactive',
+        logo_image_url: domainData.data.data?.logo_image_url || '',
+        icon_image_url: domainData.data.data?.icon_image_url || ''
       })
     } else {
       form.reset({
@@ -201,184 +201,131 @@ export default function DomainTable() {
     }
   }
 
-  const columns: ColumnDef<Domain>[] = [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false
-    },
-    {
-      accessorKey: 'id',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    {
-      accessorKey: 'domain_name',
-      header: 'Domain Name',
-      cell: ({ row }) => (
-        <div className="font-medium max-w-[150px] truncate" title={row.getValue('domain_name')}>
-          {row.getValue('domain_name')}
-        </div>
-      )
-    },
-    {
-      accessorKey: 'domain_url',
-      header: 'Domain URL',
-      cell: ({ row }) => (
-        <div className="max-w-[150px] truncate" title={row.getValue('domain_url')}>
-          {row.getValue('domain_url')}
-        </div>
-      )
-    },
-    {
-      accessorKey: 'domain_status',
-      header: 'Status',
-      cell: ({ row }) => (
-        <Badge variant={getStatusVariant(row.getValue('domain_status') as string)}>
-          {row.getValue('domain_status') as string}
-        </Badge>
-      )
-    },
-    {
-      accessorKey: 'logo_image_url',
-      header: 'Logo',
-      cell: ({ row }) => {
-        const logoUrl = row.getValue('logo_image_url') as string
-        return logoUrl ? (
-          <img 
-            src={logoUrl} 
-            alt="Domain Logo" 
-            className="h-10 w-10 rounded-full object-cover border" 
-          />
-        ) : (
-          <div className="text-muted-foreground text-sm">No logo</div>
-        )
-      }
-    },
-    {
-      accessorKey: 'icon_image_url',
-      header: 'Icon',
-      cell: ({ row }) => {
-        const iconUrl = row.getValue('icon_image_url') as string
-        return iconUrl ? (
-          <img 
-            src={iconUrl} 
-            alt="Domain Icon" 
-            className="h-10 w-10 rounded-full object-cover border" 
-          />
-        ) : (
-          <div className="text-muted-foreground text-sm">No icon</div>
-        )
-      }
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Created',
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('createdAt'))
-        return (
-          <div className="text-sm whitespace-nowrap">
-            {date.toLocaleDateString()}
-            <div className="text-xs text-muted-foreground">
-              {date.toLocaleTimeString()}
-            </div>
-          </div>
-        )
-      }
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('updatedAt'))
-        return (
-          <div className="text-sm whitespace-nowrap">
-            {date.toLocaleDateString()}
-            <div className="text-xs text-muted-foreground">
-              {date.toLocaleTimeString()}
-            </div>
-          </div>
-        )
-      }
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      enableHiding: false,
-      cell: ({ row }) => {
-        const domain = row.original
-        return (
-          <div className="flex space-x-2">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => handleEdit(domain)}
-              className="h-8 w-8"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <AlertDialog
-              open={deleteDialogOpen && domainToDelete === domain.documentId}
-              onOpenChange={setDeleteDialogOpen}
-            >
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDelete(domain.documentId)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the domain
-                    "{domain.domain_name}" and remove it from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setDomainToDelete(null)}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
-                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )
-      }
-    }
-  ]
+const columns: ColumnDef<Domain>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false
+  },
 
+
+  {
+    accessorKey: 'domain_name',
+    header: 'Domain Name',
+    cell: ({ row }) => (
+      <div className="font-medium max-w-[150px] truncate" title={row.getValue('domain_name')}>
+        {row.getValue('domain_name')}
+      </div>
+    )
+  },
+  {
+    accessorKey: 'domain_url',
+    header: 'Domain URL',
+    cell: ({ row }) => (
+      <div className="max-w-[150px] truncate lowercase" title={row.getValue('domain_url')}>
+        {row.getValue('domain_url')}
+      </div>
+    )
+  },
+  {
+    accessorKey: 'domain_status',
+    header: 'Status',
+    cell: ({ row }) => (
+      <Badge variant={getStatusVariant(row.getValue('domain_status') as string)}>
+        {row.getValue('domain_status') as string}
+      </Badge>
+    )
+  },
+  {
+    accessorKey: 'logo_image_url',
+    header: 'Logo',
+    cell: ({ row }) => {
+      const logoUrl = row.getValue('logo_image_url') as string
+      return logoUrl ? (
+        <img 
+          src={logoUrl} 
+          alt="Domain Logo" 
+          className="h-10 w-10 rounded-full object-cover border" 
+        />
+      ) : (
+        <div className="text-muted-foreground text-sm">No logo</div>
+      )
+    }
+  },
+  {
+    accessorKey: 'icon_image_url',
+    header: 'Icon',
+    cell: ({ row }) => {
+      const iconUrl = row.getValue('icon_image_url') as string
+      return iconUrl ? (
+        <img 
+          src={iconUrl} 
+          alt="Domain Icon" 
+          className="h-10 w-10 rounded-full object-cover border" 
+        />
+      ) : (
+        <div className="text-muted-foreground text-sm">No icon</div>
+      )
+    }
+  },
+ 
+  
+  
+  {
+    accessorKey: 'createdAt',
+    header: 'Created',
+    cell: ({ row }) => {
+      const date = new Date(row.getValue('createdAt'))
+      return (
+        <div className="text-sm whitespace-nowrap">
+          {date.toLocaleDateString()}
+          <div className="text-xs text-muted-foreground">
+            {date.toLocaleTimeString()}
+          </div>
+        </div>
+      )
+    }
+  },
+
+  {
+    id: 'actions',
+    header: 'Actions',
+    enableHiding: false,
+    cell: ({ row }) => {
+      const domain = row.original
+      return (
+        <div className="flex space-x-2">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => handleEdit(domain)}
+            className="h-8 w-8"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        
+        </div>
+      )
+    }
+  }
+]
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-6 space-y-6">

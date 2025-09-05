@@ -84,8 +84,8 @@ export default function TagTable() {
   React.useEffect(() => {
     if (tagData?.data) {
       form.reset({
-        tag_name: tagData.data.tag_name,
-        tag_url: tagData.data.tag_url
+        tag_name: tagData.data.data.tag_name,
+        tag_url: tagData.data.data.tag_url
       })
     } else {
       form.reset({
@@ -163,140 +163,84 @@ export default function TagTable() {
     }
   }
 
-  const columns: ColumnDef<Tag>[] = [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false
-    },
-    {
-      accessorKey: 'id',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    {
-      accessorKey: 'tag_name',
-      header: 'Tag Name',
-      cell: ({ row }) => (
-        <div className="font-medium capitalize">{row.getValue('tag_name')}</div>
-      )
-    },
-    {
-      accessorKey: 'tag_url',
-      header: 'Tag URL',
-      cell: ({ row }) => (
-        <Badge variant="secondary" className="lowercase">
-          {row.getValue('tag_url')}
-        </Badge>
-      )
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Created',
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('createdAt'))
-        return (
-          <div className="text-sm whitespace-nowrap">
-            {date.toLocaleDateString()}
-            <div className="text-xs text-muted-foreground">
-              {date.toLocaleTimeString()}
-            </div>
+const columns: ColumnDef<Tag>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false
+  },
+
+  {
+    accessorKey: 'tag_name',
+    header: 'Tag Name',
+    cell: ({ row }) => (
+      <div className="font-medium capitalize">{row.getValue('tag_name')}</div>
+    )
+  },
+  {
+    accessorKey: 'tag_url',
+    header: 'Tag URL',
+    cell: ({ row }) => (
+      <Badge variant="secondary" className="lowercase">
+        {row.getValue('tag_url')}
+      </Badge>
+    )
+  },
+  {
+    accessorKey: 'createdAt',
+    header: 'Created',
+    cell: ({ row }) => {
+      const date = new Date(row.getValue('createdAt'))
+      return (
+        <div className="text-sm whitespace-nowrap">
+          {date.toLocaleDateString()}
+          <div className="text-xs text-muted-foreground">
+            {date.toLocaleTimeString()}
           </div>
-        )
-      }
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('updatedAt'))
-        return (
-          <div className="text-sm whitespace-nowrap">
-            {date.toLocaleDateString()}
-            <div className="text-xs text-muted-foreground">
-              {date.toLocaleTimeString()}
-            </div>
-          </div>
-        )
-      }
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      enableHiding: false,
-      cell: ({ row }) => {
-        const tag = row.original
-        return (
-          <div className="flex space-x-2">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => handleEdit(tag)}
-              className="h-8 w-8"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <AlertDialog
-              open={deleteDialogOpen && tagToDelete === tag.documentId}
-              onOpenChange={setDeleteDialogOpen}
-            >
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDelete(tag.documentId)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the tag
-                    "{tag.tag_name}" and remove it from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setTagToDelete(null)}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
-                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )
-      }
+        </div>
+      )
     }
-  ]
+  },
+
+  {
+    id: 'actions',
+    header: 'Actions',
+    enableHiding: false,
+    cell: ({ row }) => {
+      const tag = row.original
+      return (
+        <div className="flex space-x-2">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => handleEdit(tag)}
+            className="h-8 w-8"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+       
+        </div>
+      )
+    }
+  }
+]
 
   return (
     <div className="min-h-screen bg-background">

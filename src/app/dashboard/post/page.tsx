@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, Edit, Trash2, Plus } from 'lucide-react'
+import { ArrowUpDown, Edit, Trash2, Plus, Eye } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -79,12 +79,12 @@ export type BlogPost = {
     domain_name: string
     domain_url: string
   }>
-  category?: {
+  categories?: Array<{
     id: number
     documentId: string
     category_name: string
     category_url: string
-  }
+  }>
 }
 
 const formSchema = z.object({
@@ -138,7 +138,7 @@ export default function BlogPostTable() {
         blog_post_image_url: post.blog_post_image_url,
         blog_post_status: post.blog_post_status,
         domain_id: post.domains && post.domains.length > 0 ? post.domains[0].documentId : '',
-        category_id: post.category ? post.category.documentId : ''
+        category_id: post.categories && post.categories.length > 0 ? post.categories[0].documentId : ''
       })
 
       // Set the editor content in the expected structured format
@@ -179,7 +179,7 @@ export default function BlogPostTable() {
       })
       setEditorContent(null)
     }
-  }, [blogPostData, form, isDialogOpen])
+  }, [blogPostData, isDialogOpen])
 
   React.useEffect(() => {
     if (!isDialogOpen) {
@@ -232,7 +232,7 @@ export default function BlogPostTable() {
           isTemporary: true
         }]
       },
-      category: {
+      categories: {
         connect: [{
           id: categoriesData?.data?.data?.find(c => c.documentId === values.category_id)?.id,
           documentId: values.category_id,
@@ -309,18 +309,7 @@ export default function BlogPostTable() {
       enableSorting: false,
       enableHiding: false
     },
-    {
-      accessorKey: 'id',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    
     {
       accessorKey: 'blog_post_title',
       header: 'Title',
@@ -358,15 +347,15 @@ export default function BlogPostTable() {
       }
     },
     {
-      accessorKey: 'category',
+      accessorKey: 'categories',
       header: 'Category',
       cell: ({ row }) => {
-        const category = row.original.category
+        const categories = row.original.categories
         return (
           <div className="max-w-[120px]">
-            {category ? (
+            {categories && categories.length > 0 ? (
               <Badge variant="outline" className="truncate">
-                {category.category_name}
+                {categories[0].category_name}
               </Badge>
             ) : (
               <span className="text-muted-foreground">No category</span>
@@ -399,21 +388,7 @@ export default function BlogPostTable() {
         )
       }
     },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('updatedAt'))
-        return (
-          <div className="text-sm whitespace-nowrap">
-            {date.toLocaleDateString()}
-            <div className="text-xs text-muted-foreground">
-              {date.toLocaleTimeString()}
-            </div>
-          </div>
-        )
-      }
-    },
+   
     {
       id: 'actions',
       header: 'Actions',
@@ -430,38 +405,17 @@ export default function BlogPostTable() {
             >
               <Edit className="h-4 w-4" />
             </Button>
-            <AlertDialog
-              open={deleteDialogOpen && blogPostToDelete === blogPost.documentId}
-              onOpenChange={setDeleteDialogOpen}
-            >
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDelete(blogPost.documentId)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the blog post
-                    "{blogPost.blog_post_title}" and remove it from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setBlogPostToDelete(null)}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={confirmDelete} disabled={deleteMutation.isPending}>
-                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+             <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => {
+            window.open(`/dashboard/post/view?documentId=${blogPost.documentId}`, '_blank')
+          }}
+          className="h-8 w-8"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+         
           </div>
         )
       }
