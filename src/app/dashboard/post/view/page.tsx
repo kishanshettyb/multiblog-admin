@@ -19,6 +19,7 @@ import {
   BookmarkCheck
 } from 'lucide-react'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
 // Enhanced Content renderer component for Quill format
 function ContentRenderer({ content }: { content: any }) {
@@ -107,7 +108,40 @@ function ContentRenderer({ content }: { content: any }) {
   return <p className="text-muted-foreground">Unsupported content format.</p>
 }
 
-export default function BlogPostViewPage() {
+// Loading fallback component
+function BlogPostViewFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <Skeleton className="h-12 w-3/4 mb-6 rounded-xl" />
+          <Skeleton className="h-6 w-1/2 mb-8 rounded-xl" />
+          
+          {/* Image skeleton with shimmer effect */}
+          <div className="relative overflow-hidden rounded-2xl mb-8">
+            <Skeleton className="h-96 w-full rounded-2xl" />
+            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+          </div>
+          
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-full rounded-xl" />
+            <Skeleton className="h-6 w-3/4 rounded-xl" />
+            <Skeleton className="h-6 w-1/2 rounded-xl" />
+          </div>
+          
+          <div className="mt-8 flex gap-4">
+            <Skeleton className="h-10 w-24 rounded-full" />
+            <Skeleton className="h-10 w-24 rounded-full" />
+            <Skeleton className="h-10 w-24 rounded-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Main content component that uses searchParams
+function BlogPostViewContent() {
   const searchParams = useSearchParams()
   const documentId = searchParams.get('documentId')
   const { data: postData, isLoading, error } = useGetPostById(documentId || '')
@@ -151,34 +185,7 @@ export default function BlogPostViewPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto py-8 px-4">
-          <div className="max-w-4xl mx-auto">
-            <Skeleton className="h-12 w-3/4 mb-6 rounded-xl" />
-            <Skeleton className="h-6 w-1/2 mb-8 rounded-xl" />
-            
-            {/* Image skeleton with shimmer effect */}
-            <div className="relative overflow-hidden rounded-2xl mb-8">
-              <Skeleton className="h-96 w-full rounded-2xl" />
-              <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-            </div>
-            
-            <div className="space-y-4">
-              <Skeleton className="h-6 w-full rounded-xl" />
-              <Skeleton className="h-6 w-3/4 rounded-xl" />
-              <Skeleton className="h-6 w-1/2 rounded-xl" />
-            </div>
-            
-            <div className="mt-8 flex gap-4">
-              <Skeleton className="h-10 w-24 rounded-full" />
-              <Skeleton className="h-10 w-24 rounded-full" />
-              <Skeleton className="h-10 w-24 rounded-full" />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+    return <BlogPostViewFallback />
   }
 
   if (!post) {
@@ -434,5 +441,14 @@ export default function BlogPostViewPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+// Main exported component with Suspense boundary
+export default function BlogPostViewPage() {
+  return (
+    <Suspense fallback={<BlogPostViewFallback />}>
+      <BlogPostViewContent />
+    </Suspense>
   )
 }
