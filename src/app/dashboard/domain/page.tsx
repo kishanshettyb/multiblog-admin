@@ -201,287 +201,292 @@ export default function DomainTable() {
     }
   }
 
-const columns: ColumnDef<Domain>[] = [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false
-  },
-
-
-  {
-    accessorKey: 'domain_name',
-    header: 'Domain Name',
-    cell: ({ row }) => (
-      <div className="font-medium max-w-[150px] truncate" title={row.getValue('domain_name')}>
-        {row.getValue('domain_name')}
-      </div>
-    )
-  },
-  {
-    accessorKey: 'domain_url',
-    header: 'Domain URL',
-    cell: ({ row }) => (
-      <div className="max-w-[150px] truncate lowercase" title={row.getValue('domain_url')}>
-        {row.getValue('domain_url')}
-      </div>
-    )
-  },
-  {
-    accessorKey: 'domain_status',
-    header: 'Status',
-    cell: ({ row }) => (
-      <Badge variant={getStatusVariant(row.getValue('domain_status') as string)}>
-        {row.getValue('domain_status') as string}
-      </Badge>
-    )
-  },
-  {
-    accessorKey: 'logo_image_url',
-    header: 'Logo',
-    cell: ({ row }) => {
-      const logoUrl = row.getValue('logo_image_url') as string
-      return logoUrl ? (
-        <img 
-          src={logoUrl} 
-          alt="Domain Logo" 
-          className="h-10 w-10 rounded-full object-cover border" 
+  const columns: ColumnDef<Domain>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
         />
-      ) : (
-        <div className="text-muted-foreground text-sm">No logo</div>
-      )
-    }
-  },
-  {
-    accessorKey: 'icon_image_url',
-    header: 'Icon',
-    cell: ({ row }) => {
-      const iconUrl = row.getValue('icon_image_url') as string
-      return iconUrl ? (
-        <img 
-          src={iconUrl} 
-          alt="Domain Icon" 
-          className="h-10 w-10 rounded-full object-cover border" 
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
         />
-      ) : (
-        <div className="text-muted-foreground text-sm">No icon</div>
+      ),
+      enableSorting: false,
+      enableHiding: false
+    },
+    {
+      accessorKey: 'domain_name',
+      header: 'Domain Name',
+      cell: ({ row }) => (
+        <div className="font-medium max-w-[150px] truncate" title={row.getValue('domain_name')}>
+          {row.getValue('domain_name')}
+        </div>
       )
-    }
-  },
- 
-  
-  
-  {
-    accessorKey: 'createdAt',
-    header: 'Created',
-    cell: ({ row }) => {
-      const date = new Date(row.getValue('createdAt'))
-      return (
-        <div className="text-sm whitespace-nowrap">
-          {date.toLocaleDateString()}
-          <div className="text-xs text-muted-foreground">
-            {date.toLocaleTimeString()}
+    },
+    {
+      accessorKey: 'domain_url',
+      header: 'Domain URL',
+      cell: ({ row }) => (
+        <div className="max-w-[150px] truncate lowercase" title={row.getValue('domain_url')}>
+          {row.getValue('domain_url')}
+        </div>
+      )
+    },
+    {
+      accessorKey: 'domain_status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge variant={getStatusVariant(row.getValue('domain_status') as string)}>
+          {row.getValue('domain_status') as string}
+        </Badge>
+      )
+    },
+    {
+      accessorKey: 'logo_image_url',
+      header: 'Logo',
+      cell: ({ row }) => {
+        const logoUrl = row.getValue('logo_image_url') as string
+        return logoUrl ? (
+          <img
+            src={logoUrl}
+            alt="Domain Logo"
+            className="h-10 w-10 rounded-full object-cover border"
+          />
+        ) : (
+          <div className="text-muted-foreground text-sm">No logo</div>
+        )
+      }
+    },
+    {
+      accessorKey: 'icon_image_url',
+      header: 'Icon',
+      cell: ({ row }) => {
+        const iconUrl = row.getValue('icon_image_url') as string
+        return iconUrl ? (
+          <img
+            src={iconUrl}
+            alt="Domain Icon"
+            className="h-10 w-10 rounded-full object-cover border"
+          />
+        ) : (
+          <div className="text-muted-foreground text-sm">No icon</div>
+        )
+      }
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => {
+        const date = new Date(row.getValue('createdAt'))
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">{date.toLocaleTimeString()}</div>
           </div>
-        </div>
-      )
+        )
+      }
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      enableHiding: false,
+      cell: ({ row }) => {
+        const domain = row.original
+        return (
+          <div className="flex space-x-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => handleEdit(domain)}
+              className="h-8 w-8"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
+        )
+      }
     }
-  },
+  ]
 
-  {
-    id: 'actions',
-    header: 'Actions',
-    enableHiding: false,
-    cell: ({ row }) => {
-      const domain = row.original
-      return (
-        <div className="flex space-x-2">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => handleEdit(domain)}
-            className="h-8 w-8"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-        
-        </div>
-      )
-    }
-  }
-]
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Domains</h1>
-            <p className="text-muted-foreground">
-              Manage your domains and their settings
-            </p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditingDomain(null)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Domain
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingDomain ? 'Edit Domain' : 'Create Domain'}</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="domain_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Domain Name</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter domain name"
-                              {...field}
-                              value={field.value || ''}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="domain_url"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Domain URL</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="https://example.com"
-                              {...field}
-                              value={field.value || ''}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="domain_status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="logo_image_url"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Logo Image URL (Optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="https://example.com/logo.png"
-                              {...field}
-                              value={field.value || ''}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="icon_image_url"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Icon Image URL (Optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="https://example.com/icon.png"
-                              {...field}
-                              value={field.value || ''}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end gap-4 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsDialogOpen(false)
-                        setEditingDomain(null)
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={createMutation.isPending || updateMutation.isPending}
-                    >
-                      {createMutation.isPending || updateMutation.isPending
-                        ? 'Saving...'
-                        : editingDomain
-                          ? 'Update'
-                          : 'Create'}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Domains</h1>
+          <p className="text-muted-foreground">Manage your domains and their settings</p>
         </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingDomain(null)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Domain
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingDomain ? 'Edit Domain' : 'Create Domain'}</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="domain_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Domain Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter domain name"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="domain_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Domain URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://example.com"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="domain_status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="logo_image_url"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Logo Image URL (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://example.com/logo.png"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="icon_image_url"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Icon Image URL (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://example.com/icon.png"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Domains</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataTable 
-              columns={columns} 
-              data={data?.data?.data || []} 
-              className="w-full"
-            />
-          </CardContent>
-        </Card>
+                <div className="flex justify-end gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsDialogOpen(false)
+                      setEditingDomain(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                  >
+                    {createMutation.isPending || updateMutation.isPending
+                      ? 'Saving...'
+                      : editingDomain
+                        ? 'Update'
+                        : 'Create'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>All Domains</CardTitle>
+        </CardHeader>
+        <CardContent className="w-full p-0">
+          <DataTable columns={columns} data={data?.data?.data || []} className="w-full" />
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the domain and remove it
+              from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

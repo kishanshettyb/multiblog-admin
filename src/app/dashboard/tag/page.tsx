@@ -163,183 +163,172 @@ export default function TagTable() {
     }
   }
 
-const columns: ColumnDef<Tag>[] = [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false
-  },
-
-  {
-    accessorKey: 'tag_name',
-    header: 'Tag Name',
-    cell: ({ row }) => (
-      <div className="font-medium capitalize">{row.getValue('tag_name')}</div>
-    )
-  },
-  {
-    accessorKey: 'tag_url',
-    header: 'Tag URL',
-    cell: ({ row }) => (
-      <Badge variant="secondary" className="lowercase">
-        {row.getValue('tag_url')}
-      </Badge>
-    )
-  },
-  {
-    accessorKey: 'createdAt',
-    header: 'Created',
-    cell: ({ row }) => {
-      const date = new Date(row.getValue('createdAt'))
-      return (
-        <div className="text-sm whitespace-nowrap">
-          {date.toLocaleDateString()}
-          <div className="text-xs text-muted-foreground">
-            {date.toLocaleTimeString()}
+  const columns: ColumnDef<Tag>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false
+    },
+    {
+      accessorKey: 'tag_name',
+      header: 'Tag Name',
+      cell: ({ row }) => <div className="font-medium capitalize">{row.getValue('tag_name')}</div>
+    },
+    {
+      accessorKey: 'tag_url',
+      header: 'Tag URL',
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="lowercase">
+          {row.getValue('tag_url')}
+        </Badge>
+      )
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => {
+        const date = new Date(row.getValue('createdAt'))
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">{date.toLocaleTimeString()}</div>
           </div>
-        </div>
-      )
+        )
+      }
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      enableHiding: false,
+      cell: ({ row }) => {
+        const tag = row.original
+        return (
+          <div className="flex space-x-2">
+            <Button size="icon" variant="ghost" onClick={() => handleEdit(tag)} className="h-8 w-8">
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
+        )
+      }
     }
-  },
-
-  {
-    id: 'actions',
-    header: 'Actions',
-    enableHiding: false,
-    cell: ({ row }) => {
-      const tag = row.original
-      return (
-        <div className="flex space-x-2">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => handleEdit(tag)}
-            className="h-8 w-8"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-       
-        </div>
-      )
-    }
-  }
-]
+  ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Tags</h1>
-            <p className="text-muted-foreground">
-              Manage your tags and categories
-            </p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditingTag(null)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Tag
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>{editingTag ? 'Edit Tag' : 'Create Tag'}</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="tag_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tag Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter tag name"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="tag_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tag URL</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter tag URL" 
-                            {...field} 
-                            value={field.value || ''} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex justify-end gap-4 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsDialogOpen(false)
-                        setEditingTag(null)
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={createMutation.isPending || updateMutation.isPending}
-                    >
-                      {createMutation.isPending || updateMutation.isPending
-                        ? 'Saving...'
-                        : editingTag
-                          ? 'Update'
-                          : 'Create'}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Tags</h1>
+          <p className="text-muted-foreground">Manage your tags and categories</p>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>All Tags</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataTable 
-              columns={columns} 
-              data={tagsData?.data?.data || []} 
-              className="w-full"
-            />
-          </CardContent>
-        </Card>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingTag(null)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Tag
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>{editingTag ? 'Edit Tag' : 'Create Tag'}</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="tag_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tag Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter tag name" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="tag_url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tag URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter tag URL" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsDialogOpen(false)
+                      setEditingTag(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                  >
+                    {createMutation.isPending || updateMutation.isPending
+                      ? 'Saving...'
+                      : editingTag
+                        ? 'Update'
+                        : 'Create'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      {/* Remove the Card wrapper and use DataTable directly */}
+      <div className="w-full overflow-hidden">
+        <DataTable columns={columns} data={tagsData?.data?.data || []} className="w-full" />
+      </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the tag and remove it from
+              our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

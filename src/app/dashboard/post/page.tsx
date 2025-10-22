@@ -138,7 +138,8 @@ export default function BlogPostTable() {
         blog_post_image_url: post.blog_post_image_url,
         blog_post_status: post.blog_post_status,
         domain_id: post.domains && post.domains.length > 0 ? post.domains[0].documentId : '',
-        category_id: post.categories && post.categories.length > 0 ? post.categories[0].documentId : ''
+        category_id:
+          post.categories && post.categories.length > 0 ? post.categories[0].documentId : ''
       })
 
       // Set the editor content in the expected structured format
@@ -226,18 +227,22 @@ export default function BlogPostTable() {
       blog_post_image_url: values.blog_post_image_url,
       blog_post_status: values.blog_post_status,
       domains: {
-        connect: [{
-          id: domainsData?.data?.data?.find(d => d.documentId === values.domain_id)?.id,
-          documentId: values.domain_id,
-          isTemporary: true
-        }]
+        connect: [
+          {
+            id: domainsData?.data?.data?.find((d) => d.documentId === values.domain_id)?.id,
+            documentId: values.domain_id,
+            isTemporary: true
+          }
+        ]
       },
       categories: {
-        connect: [{
-          id: categoriesData?.data?.data?.find(c => c.documentId === values.category_id)?.id,
-          documentId: values.category_id,
-          isTemporary: true
-        }]
+        connect: [
+          {
+            id: categoriesData?.data?.data?.find((c) => c.documentId === values.category_id)?.id,
+            documentId: values.category_id,
+            isTemporary: true
+          }
+        ]
       }
     }
 
@@ -309,7 +314,7 @@ export default function BlogPostTable() {
       enableSorting: false,
       enableHiding: false
     },
-    
+
     {
       accessorKey: 'blog_post_title',
       header: 'Title',
@@ -381,14 +386,12 @@ export default function BlogPostTable() {
         return (
           <div className="text-sm whitespace-nowrap">
             {date.toLocaleDateString()}
-            <div className="text-xs text-muted-foreground">
-              {date.toLocaleTimeString()}
-            </div>
+            <div className="text-xs text-muted-foreground">{date.toLocaleTimeString()}</div>
           </div>
         )
       }
     },
-   
+
     {
       id: 'actions',
       header: 'Actions',
@@ -405,17 +408,16 @@ export default function BlogPostTable() {
             >
               <Edit className="h-4 w-4" />
             </Button>
-             <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => {
-            window.open(`/dashboard/post/view?documentId=${blogPost.documentId}`, '_blank')
-          }}
-          className="h-8 w-8"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-         
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                window.open(`/dashboard/post/view?documentId=${blogPost.documentId}`, '_blank')
+              }}
+              className="h-8 w-8"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
           </div>
         )
       }
@@ -423,202 +425,215 @@ export default function BlogPostTable() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Blog Posts</h1>
-            <p className="text-muted-foreground">
-              Manage your blog posts and content
-            </p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditingBlogPost(null)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Blog Post
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingBlogPost ? 'Edit Blog Post' : 'Create Blog Post'}</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="blog_post_title"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Blog Post Title</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter blog post title"
-                              {...field}
-                              value={field.value || ''}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="blog_post_description"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Blog Post Description</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter blog post description"
-                              {...field}
-                              value={field.value || ''}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="blog_post_image_url"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Featured Image URL</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="https://example.com/image.jpg"
-                              {...field}
-                              value={field.value || ''}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="domain_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Domain</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a domain" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {domainsData?.data?.data?.map((domain) => (
-                                <SelectItem key={domain.documentId} value={domain.documentId}>
-                                  {domain.domain_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="category_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {categoriesData?.data?.data?.map((category) => (
-                                <SelectItem key={category.documentId} value={category.documentId}>
-                                  {category.category_name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="blog_post_status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="publish">Publish</SelectItem>
-                              <SelectItem value="save">Save</SelectItem>
-                              <SelectItem value="draft">Draft</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <FormItem>
-                    <FormLabel>Content</FormLabel>
-                    <QuillEditor
-                      ref={quillEditorRef}
-                      initialContent={editorContent}
-                      onContentChange={setEditorContent}
-                    />
-                  </FormItem>
-                  
-                  <div className="flex justify-end gap-4 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsDialogOpen(false)
-                        setEditingBlogPost(null)
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={createMutation.isPending || updateMutation.isPending}
-                    >
-                      {createMutation.isPending || updateMutation.isPending
-                        ? 'Saving...'
-                        : editingBlogPost
-                          ? 'Update'
-                          : 'Create'}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Blog Posts</h1>
+          <p className="text-muted-foreground">Manage your blog posts and content</p>
         </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingBlogPost(null)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Blog Post
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingBlogPost ? 'Edit Blog Post' : 'Create Blog Post'}</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="blog_post_title"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Blog Post Title</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter blog post title"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="blog_post_description"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Blog Post Description</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter blog post description"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="blog_post_image_url"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Featured Image URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://example.com/image.jpg"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="domain_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Domain</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a domain" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {domainsData?.data?.data?.map((domain) => (
+                              <SelectItem key={domain.documentId} value={domain.documentId}>
+                                {domain.domain_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="category_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categoriesData?.data?.data?.map((category) => (
+                              <SelectItem key={category.documentId} value={category.documentId}>
+                                {category.category_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="blog_post_status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="publish">Publish</SelectItem>
+                            <SelectItem value="save">Save</SelectItem>
+                            <SelectItem value="draft">Draft</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Blog Posts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataTable 
-              columns={columns} 
-              data={postsData?.data?.data || []} 
-              className="w-full"
-            />
-          </CardContent>
-        </Card>
+                <FormItem>
+                  <FormLabel>Content</FormLabel>
+                  <QuillEditor
+                    ref={quillEditorRef}
+                    initialContent={editorContent}
+                    onContentChange={setEditorContent}
+                  />
+                </FormItem>
+
+                <div className="flex justify-end gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsDialogOpen(false)
+                      setEditingBlogPost(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                  >
+                    {createMutation.isPending || updateMutation.isPending
+                      ? 'Saving...'
+                      : editingBlogPost
+                        ? 'Update'
+                        : 'Create'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>All Blog Posts</CardTitle>
+        </CardHeader>
+        <CardContent className="w-full p-0">
+          <DataTable columns={columns} data={postsData?.data?.data || []} className="w-full" />
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the blog post and remove it
+              from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
