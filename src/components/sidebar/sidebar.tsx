@@ -1,5 +1,6 @@
-import { Calendar, Home, Inbox, Search, Settings } from 'lucide-react'
+'use client'
 
+import { Calendar, Home, Inbox, Search, Settings, LogOut } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -10,42 +11,26 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
+import { useAdminContext } from '@/lib/adminContext'
+import { useRouter } from 'next/navigation'
 
-// Menu items.
 const items = [
-  {
-    title: 'Dashboard',
-    url: '/dashboard',
-    icon: Home
-  },
-  {
-    title: 'Category',
-    url: '/dashboard/category',
-    icon: Inbox
-  },
-  {
-    title: 'Domain',
-    url: '/dashboard/domain',
-    icon: Calendar
-  },
-  {
-    title: 'Tag',
-    url: '/dashboard/tag',
-    icon: Search
-  },
-  {
-    title: 'Post',
-    url: '/dashboard/post',
-    icon: Search
-  },
-  {
-    title: 'Settings',
-    url: '#',
-    icon: Settings
-  }
+  { title: 'Dashboard', url: '/dashboard', icon: Home },
+  { title: 'Category', url: '/dashboard/category', icon: Inbox },
+  { title: 'Domain', url: '/dashboard/domain', icon: Calendar },
+  { title: 'Tag', url: '/dashboard/tag', icon: Search },
+  { title: 'Post', url: '/dashboard/post', icon: Search },
+  { title: 'Settings', url: '#', icon: Settings }
 ]
 
 export function AppSidebar() {
+  const { loggedIn, logout } = useAdminContext()
+  const router = useRouter()
+
+  const handleLogout = () => {
+    logout()
+  }
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -63,6 +48,18 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              {/* Logout button */}
+              {loggedIn && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={handleLogout} asChild>
+                    <button className="flex items-center gap-2 w-full">
+                      <LogOut />
+                      <span>Logout</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
