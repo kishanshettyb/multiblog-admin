@@ -181,216 +181,222 @@ export default function CategoryTable() {
     }
   }
 
- const columns: ColumnDef<Category>[] = [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false
-  },
-
-
-  {
-    accessorKey: 'category_name',
-    header: 'Category Name',
-    cell: ({ row }) => (
-      <div className="font-medium capitalize">{row.getValue('category_name')}</div>
-    )
-  },
-  {
-    accessorKey: 'category_url',
-    header: 'Category URL',
-    cell: ({ row }) => (
-      <Badge variant="secondary" className="lowercase">
-        {row.getValue('category_url')}
-      </Badge>
-    )
-  },
-  {
-    accessorKey: 'category_image_url',
-    header: 'Image URL',
-    cell: ({ row }) => {
-      const imageUrl = row.getValue('category_image_url') as string
-      return (
-        <div className="max-w-[150px] truncate text-xs text-muted-foreground">
-          {imageUrl || 'No image'}
-        </div>
+  const columns: ColumnDef<Category>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false
+    },
+    {
+      accessorKey: 'category_name',
+      header: 'Category Name',
+      cell: ({ row }) => (
+        <div className="font-medium capitalize">{row.getValue('category_name')}</div>
       )
-    }
-  },
-  {
-    accessorKey: 'domains',
-    header: 'Domains',
-    cell: ({ row }) => {
-      const domains = row.original.domains
-      return (
-        <div className="text-sm">
-          {domains && domains.length > 0 ? (
-            <Badge variant="outline">
-              {domains.length} domain{domains.length !== 1 ? 's' : ''}
-            </Badge>
-          ) : (
-            <span className="text-muted-foreground">No domains</span>
-          )}
-        </div>
+    },
+    {
+      accessorKey: 'category_url',
+      header: 'Category URL',
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="lowercase">
+          {row.getValue('category_url')}
+        </Badge>
       )
-    }
-  },
-  {
-    accessorKey: 'createdAt',
-    header: 'Created',
-    cell: ({ row }) => {
-      const date = new Date(row.getValue('createdAt'))
-      return (
-        <div className="text-sm whitespace-nowrap">
-          {date.toLocaleDateString()}
-          <div className="text-xs text-muted-foreground">
-            {date.toLocaleTimeString()}
+    },
+    {
+      accessorKey: 'category_image_url',
+      header: 'Image URL',
+      cell: ({ row }) => {
+        const imageUrl = row.getValue('category_image_url') as string
+        return (
+          <div className="max-w-[150px] truncate text-xs text-muted-foreground">
+            {imageUrl || 'No image'}
           </div>
-        </div>
-      )
+        )
+      }
+    },
+    {
+      accessorKey: 'domains',
+      header: 'Domains',
+      cell: ({ row }) => {
+        const domains = row.original.domains
+        return (
+          <div className="text-sm">
+            {domains && domains.length > 0 ? (
+              <Badge variant="outline">
+                {domains.length} domain{domains.length !== 1 ? 's' : ''}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground">No domains</span>
+            )}
+          </div>
+        )
+      }
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => {
+        const date = new Date(row.getValue('createdAt'))
+        return (
+          <div className="text-sm whitespace-nowrap">
+            {date.toLocaleDateString()}
+            <div className="text-xs text-muted-foreground">{date.toLocaleTimeString()}</div>
+          </div>
+        )
+      }
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      enableHiding: false,
+      cell: ({ row }) => {
+        const category = row.original
+        return (
+          <div className="flex space-x-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => handleEdit(category)}
+              className="h-8 w-8"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
+        )
+      }
     }
-  },
- 
-  {
-    id: 'actions',
-    header: 'Actions',
-    enableHiding: false,
-    cell: ({ row }) => {
-      const category = row.original
-      return (
-        <div className="flex space-x-2">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => handleEdit(category)}
-            className="h-8 w-8"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-        
-          
-        </div>
-      )
-    }
-  }
-]
+  ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
-            <p className="text-muted-foreground">
-              Manage your blog categories
-            </p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditingCategory(null)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Category
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>{editingCategory ? 'Edit Category' : 'Create Category'}</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="category_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter category name"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="category_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category URL</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter category URL"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="flex justify-end gap-4 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsDialogOpen(false)
-                        setEditingCategory(null)
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={createMutation.isPending || updateMutation.isPending}
-                    >
-                      {createMutation.isPending || updateMutation.isPending
-                        ? 'Saving...'
-                        : editingCategory
-                          ? 'Update'
-                          : 'Create'}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+          <p className="text-muted-foreground">Manage your blog categories</p>
         </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingCategory(null)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Category
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>{editingCategory ? 'Edit Category' : 'Create Category'}</DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="category_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter category name"
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category_url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category URL</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter category URL"
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Categories</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataTable 
-              columns={columns} 
-              data={categoriesData?.data?.data || []} 
-              className="w-full"
-            />
-          </CardContent>
-        </Card>
+                <div className="flex justify-end gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsDialogOpen(false)
+                      setEditingCategory(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                  >
+                    {createMutation.isPending || updateMutation.isPending
+                      ? 'Saving...'
+                      : editingCategory
+                        ? 'Update'
+                        : 'Create'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>All Categories</CardTitle>
+        </CardHeader>
+        <CardContent className="w-full p-0">
+          <DataTable columns={columns} data={categoriesData?.data?.data || []} className="w-full" />
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the category and remove it
+              from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

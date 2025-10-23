@@ -61,24 +61,12 @@ export function AdminLoginForm({ className, ...props }: React.ComponentProps<'di
                   onChange={handleInputChange}
                   required
                 />
-                <a
-                  href="/admin/forgot-password"
-                  className="ml-auto justify-end inline-block text-xs underline-offset-4 hover:underline"
-                >
-                  Forgot your password?
-                </a>
               </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" disabled={loginMutation.isPending}>
                   {loginMutation.isPending ? 'Logging in...' : 'Login'}
                 </Button>
               </div>
-            </div>
-            <div className="mt-4 text-center text-xs">
-              Don&apos;t have an account?{' '}
-              <Link href="/admin/register" className="underline underline-offset-4">
-                Sign up
-              </Link>
             </div>
           </form>
         </CardContent>
